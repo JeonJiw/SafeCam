@@ -13,9 +13,11 @@ SafeCam is a full-stack application designed to provide real-time monitoring for
 
 ## Setup Instructions
 
+```
 ├── backend/ # Backend service using NestJS
 ├── frontend/ # Frontend built with React.js
 └── README.md # Main documentation for the entire project
+```
 
 ### 1. Backend
 
