@@ -7,26 +7,24 @@ import { User } from './entities/user.entity';
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    private usersRepository: Repository<User>,
   ) {}
 
-  async createUser(
-    username: string,
-    email: string,
-    password: string,
-    phone: string,
-  ): Promise<User> {
-    let password_hash = password + 'hashed';
-    const user = this.usersRepository.create({
-      username,
-      email,
-      password_hash,
-      phone,
-    });
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { googleId } });
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
+
+  async create(userData: Partial<User>): Promise<User> {
+    const user = this.usersRepository.create(userData);
     return this.usersRepository.save(user);
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async update(id: number, userData: Partial<User>): Promise<User> {
+    await this.usersRepository.update(id, userData);
+    return this.usersRepository.findOne({ where: { id } });
   }
 }

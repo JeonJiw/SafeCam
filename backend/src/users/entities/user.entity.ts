@@ -3,17 +3,20 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  user_id: number;
+  id: number;
 
-  @Column({ type: 'varchar', length: 40 })
-  username: string;
+  @Column({ unique: true, nullable: true })
+  googleId: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  password_hash: string;
+  @Column()
+  name: string;
 
-  @Column({ type: 'varchar', length: 40 })
-  phone: string;
+  @Column({ nullable: true })
+  profilePicture: string;
+
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 }
