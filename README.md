@@ -2,6 +2,12 @@
 
 SafeCam is a full-stack application designed to provide real-time monitoring for personal belongings in public spaces using AI and secure streaming.
 
+## Features
+
+- Real-time video streaming from laptop to mobile device.
+- AI-powered motion detection and alerts.
+- User authentication and secure data management.
+
 ## Project Structure
 
 ## Tech Stack
@@ -28,12 +34,6 @@ Follow the instructions in the [backend README](./backend/README.md).
 Follow the instructions in the [frontend README](./frontend/README.md).
 
 ---
-
-## Features
-
-- Real-time video streaming from laptop to mobile device.
-- AI-powered motion detection and alerts.
-- User authentication and secure data management.
 
 ## Demo
 
