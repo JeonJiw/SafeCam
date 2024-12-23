@@ -2,7 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/entities/user.entity';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import {
+  CreateUserDto,
+  CreateUserWithGoogleDto,
+} from 'src/users/dto/create-user.dto';
+import {
+  GoogleLoginRequestDto,
+  UpdateUserDto,
+} from 'src/users/dto/update-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,9 +25,13 @@ export class AuthService {
         message: 'No user from google',
       };
     }
-
+    const googleLoginRequestDto: GoogleLoginRequestDto = {
+      email: req.user.email,
+      googleId: req.user.googleId,
+      name: req.user.name,
+    };
     try {
-      const { email, sub: googleId, name, picture: profilePicture } = req.user;
+      const { email, googleId, name } = googleLoginRequestDto;
 
       let user = await this.usersService.findByGoogleId(googleId);
 
@@ -29,30 +40,33 @@ export class AuthService {
       }
 
       if (!user) {
-        user = await this.usersService.createWithGoogle({
-          googleId,
+        const createUserDto: CreateUserWithGoogleDto = {
           email,
           name,
-          profilePicture,
-        });
-      } else if (!user.googleId) {
-        user = await this.usersService.update(user.id, {
           googleId,
-          profilePicture,
-        });
+        };
+        user = await this.usersService.createWithGoogle(createUserDto);
+      } else {
+        try {
+          const loginResult = await this.login(user);
+          return {
+            success: true,
+            data: {
+              user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+              },
+              access_token: loginResult.access_token,
+            },
+          };
+        } catch (loginError) {
+          return {
+            success: false,
+            message: loginError.message,
+          };
+        }
       }
-
-      return {
-        success: true,
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            profilePicture: user.profilePicture,
-          },
-        },
-      };
     } catch (error) {
       return {
         success: false,

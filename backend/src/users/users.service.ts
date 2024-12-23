@@ -21,6 +21,7 @@ export class UsersService {
 
   async createWithGoogle(userData: Partial<User>): Promise<User> {
     const user = this.usersRepository.create(userData);
+    console.log('user in createWithGoogle: ', user);
     return this.usersRepository.save(user);
   }
 

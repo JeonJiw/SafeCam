@@ -2,10 +2,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private usersService: UsersService,
+  ) {
     super({
       clientID: configService.get('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
@@ -20,15 +24,26 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { displayName, emails, photos, id } = profile;
-    console.log(profile);
-    const user = {
-      name: displayName,
-      email: emails[0].value,
-      googleId: id,
-      picture: photos[0].value,
-      accessToken,
-    };
-    done(null, user);
+    const { displayName, emails, id } = profile;
+    try {
+      let user = await this.usersService.findByGoogleId(id); // Google ID로 사용자 조회
+
+      if (!user) {
+        user = await this.usersService.findByEmail(emails[0].value);
+      }
+
+      if (!user) {
+        user = await this.usersService.createWithGoogle({
+          googleId: id,
+          email: emails[0].value,
+          name: displayName,
+        });
+      } else if (!user.googleId) {
+        user = await this.usersService.update(user.id, { googleId: id });
+      }
+      done(null, user);
+    } catch (error) {
+      done(error, false);
+    }
   }
 }
