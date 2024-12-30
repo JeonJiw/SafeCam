@@ -1,5 +1,11 @@
 import { Device } from 'src/devices/entities/device.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class User {
@@ -18,7 +24,10 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ default: 'user' })
+  role: string; // "admin", "user", "guest"
+
+  @CreateDateColumn()
   createdAt: Date;
 
   @OneToMany(() => Device, (device) => device.user)

@@ -17,7 +17,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       scope: ['email', 'profile'],
     });
   }
-
+  //Only after the token exchange is successful
   async validate(
     accessToken: string,
     refreshToken: string,

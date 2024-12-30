@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../users/entities/user.entity';
 import {
   CreateUserDto,
   CreateUserWithGoogleDto,
 } from 'src/users/dto/create-user.dto';
-import {
-  GoogleLoginRequestDto,
-  UpdateUserDto,
-} from 'src/users/dto/update-user.dto';
+import { GoogleLoginRequestDto } from 'src/users/dto/update-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -56,6 +52,7 @@ export class AuthService {
                 id: user.id,
                 email: user.email,
                 name: user.name,
+                role: user.role,
               },
               access_token: loginResult.access_token,
             },
@@ -80,7 +77,12 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, name: user.name };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      name: user.name,
+      role: user.role,
+    };
     return {
       access_token: this.jwtService.sign(payload),
     };

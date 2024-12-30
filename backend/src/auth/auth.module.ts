@@ -7,10 +7,12 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from 'src/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/ jwt.strategy';
+import { AdminGuard } from './guards/admin.guard';
 
 @Module({
   imports: [
-    PassportModule.register({ defaultStrategy: 'google' }),
+    PassportModule.register({}),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -22,7 +24,13 @@ import { LocalStrategy } from './strategies/local.strategy';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, LocalStrategy],
-  exports: [AuthService],
+  providers: [
+    JwtStrategy,
+    AdminGuard,
+    AuthService,
+    GoogleStrategy,
+    LocalStrategy,
+  ],
+  exports: [AuthService, AdminGuard],
 })
 export class AuthModule {}
