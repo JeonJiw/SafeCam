@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -21,12 +22,12 @@ export class DevicesService {
     private usersService: UsersService,
   ) {}
 
-  async create(createDeviceDto: CreateDeviceDto, user: User): Promise<Device> {
+  async create(
+    createDeviceDto: CreateDeviceDto,
+    userId: number,
+  ): Promise<Device> {
     const device = this.devicesRepository.create(createDeviceDto);
-    const deviceUser = await this.usersService.findOne(user.id);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const deviceUser = await this.usersService.findOne(userId);
     device.user = deviceUser;
     return await this.devicesRepository.save(device);
   }
@@ -41,16 +42,27 @@ export class DevicesService {
     return await this.devicesRepository.find();
   }
 
-  async findOne(id: number): Promise<Device | undefined> {
-    return await this.devicesRepository.findOne({
+  async findOne(id: number, user: User): Promise<Device | undefined> {
+    const device = await this.devicesRepository.findOne({
       where: { id },
       relations: ['user'],
     });
+    if (!device) {
+      throw new NotFoundException('Device not found');
+    }
+    if (user.role != 'admin' && device.user?.id !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to access this device',
+      );
+    }
+
+    return device;
   }
 
   async update(
     id: number,
     updateDeviceDto: UpdateDeviceDto,
+    user: User,
   ): Promise<Device | undefined> {
     const device = await this.devicesRepository.findOne({
       where: { id },
@@ -59,6 +71,11 @@ export class DevicesService {
     if (!device) {
       throw new NotFoundException(`Device with ID ${id} not found`);
     }
+    if (user.role != 'admin' && device.user?.id !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to access this device',
+      );
+    }
     await this.devicesRepository.update(id, updateDeviceDto);
     return await this.devicesRepository.findOne({
       where: { id },
@@ -66,7 +83,20 @@ export class DevicesService {
     });
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number, user: User): Promise<void> {
+    const device = await this.devicesRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+    if (!device) {
+      throw new NotFoundException(`Device with ID ${id} not found`);
+    }
+    if (user.role != 'admin' && device.user?.id !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to access this device',
+      );
+    }
+
     const result = await this.devicesRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Device with ID ${id} not found`);

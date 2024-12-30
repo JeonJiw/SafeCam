@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,7 +18,8 @@ export class Device {
   @Column({ type: 'uuid', unique: true })
   deviceId: string;
 
-  @ManyToOne(() => User, (user) => user.devices)
+  @ManyToOne(() => User, (user) => user.devices, { eager: true, cascade: true })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @Column()

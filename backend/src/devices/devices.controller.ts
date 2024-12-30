@@ -27,8 +27,8 @@ export class DevicesController {
     @Body() createDeviceDto: CreateDeviceDto,
     @Req() req,
   ): Promise<Device> {
-    const user = req.user;
-    return await this.devicesService.create(createDeviceDto, user);
+    const userId = req.user.userId;
+    return await this.devicesService.create(createDeviceDto, userId);
   }
 
   @Get('mydevices')
@@ -46,20 +46,28 @@ export class DevicesController {
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
+    @Req() req,
   ): Promise<Device | undefined> {
-    return await this.devicesService.findOne(id);
+    const user = req.user;
+    return await this.devicesService.findOne(id, user);
   }
 
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDeviceDto: UpdateDeviceDto,
+    @Req() req,
   ): Promise<Device | undefined> {
-    return await this.devicesService.update(id, updateDeviceDto);
+    const user = req.user;
+    return await this.devicesService.update(id, updateDeviceDto, user);
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return await this.devicesService.remove(id);
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req,
+  ): Promise<void> {
+    const user = req.user;
+    return await this.devicesService.remove(id, user);
   }
 }
