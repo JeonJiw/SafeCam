@@ -25,8 +25,21 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // API Call
-      navigate("/dashboard");
+      const response = await fetch("http://localhost:3002/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      console.log("login data:", data);
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        alert("Logged in successful!");
+        navigate("/dashboard");
+      } else {
+        setError("Sign up failed. Please try again.");
+      }
     } catch (err) {
       setError(err.message);
     }

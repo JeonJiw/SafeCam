@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import User from "./pages/User";
+import Dashboard from "./pages/Dashboard";
 import Monitoring from "./pages/Monitoring";
 import ViewStream from "./pages/ViewStream";
 import Header from "./components/UI/Header";
@@ -31,6 +32,7 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/user" element={<User />} />
           <Route path="/monitoring" element={<Monitoring />} />
           <Route path="/view/:id" element={<ViewStream />} />

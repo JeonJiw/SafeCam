@@ -69,8 +69,18 @@ function Signup() {
       return;
     }
     try {
-      // API Call
-      navigate("/login");
+      const response = await fetch("http://localhost:3002/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      console.log("res: ", response);
+      if (response.ok) {
+        alert("Sign up successful!");
+        navigate("/login");
+      } else {
+        setError("Sign up failed. Please try again.");
+      }
     } catch (err) {
       setError(err.message);
     }
