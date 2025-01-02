@@ -5,9 +5,23 @@ export const useGoogleAuth = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
 
-  const handleGoogleAuth = () => {
-    const backendURL = "http://localhost:3002";
-    window.location.href = `${backendURL}/auth/google`;
+  const handleGoogleAuth = async () => {
+    try {
+      const backendURL = "http://localhost:3002";
+      const response = await fetch(`${backendURL}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      setError("Google authentication failed");
+    }
   };
 
   // Callback after Google Auth
