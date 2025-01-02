@@ -6,11 +6,11 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  @Get('google')
+  @Post('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
 
-  @Get('google/callback')
+  @Post('google/callback')
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req) {
     return this.authService.googleLogin(req);
