@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, AlertCircle } from "lucide-react";
+import { Mail, Lock, User } from "lucide-react";
 import Input from "../components/UI/Input";
 import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
