@@ -1,18 +1,38 @@
-import { Controller, Get, UseGuards, Req, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Post,
+  Body,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import * as crypto from 'crypto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  @Post('google')
+  @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) {}
+  async googleAuth(@Req() req) {
+    const state = crypto.randomBytes(16).toString('hex');
+    req.session.state = state;
+  }
 
-  @Post('google/callback')
+  @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req) {
+    // state 검증
+    if (req.query.state !== req.session.state) {
+      throw new UnauthorizedException('Invalid state parameter');
+    }
+
+    // 검증 후 세션의 state 삭제
+    delete req.session.state;
+
     return this.authService.googleLogin(req);
   }
 
