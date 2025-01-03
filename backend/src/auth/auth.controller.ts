@@ -6,6 +6,7 @@ import {
   Post,
   Body,
   UnauthorizedException,
+  Res,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -48,5 +49,24 @@ export class AuthController {
       return { message: 'Login failed' };
     }
     return this.authService.login(req.user);
+  }
+
+  @Post('logout')
+  async logout(@Req() req, @Res() res) {
+    try {
+      req.session.destroy();
+      res.clearCookie('connect.sid');
+
+      return res.status(200).json({
+        success: true,
+        message: 'Successfully logged out',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Logout failed',
+      });
+    }
   }
 }
