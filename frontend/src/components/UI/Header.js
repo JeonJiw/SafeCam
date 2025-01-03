@@ -1,8 +1,18 @@
 import React from "react";
 import { Camera, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
+import { authService } from "../../services/authService";
+import Button from "./Button";
 
 function Header() {
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <nav className="bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
@@ -40,6 +50,11 @@ function Header() {
             >
               Settings
             </Link>
+            {authService.isAuthenticated() && (
+              <Button onClick={handleLogout} variant="secondary">
+                Logout
+              </Button>
+            )}
           </div>
           {/* Mobile */}
           <div className="md:hidden">
