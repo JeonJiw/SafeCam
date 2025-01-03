@@ -4,7 +4,7 @@ import { Mail, Lock } from "lucide-react";
 import Input from "../components/UI/Input";
 import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
-import GoogleAuthButton from "../components/UI/GoogleAuthButton";
+import GoogleAuthButton from "../components/Auth/GoogleAuthButton";
 import { authService } from "../services/authService";
 
 function Login() {
@@ -30,7 +30,7 @@ function Login() {
       console.log("login data:", response);
 
       if (response.access_token) {
-        localStorage.setItem("access_token", response.access_token); // token -> access_token
+        localStorage.setItem("access_token", response.access_token);
         alert("Logged in successful!");
         navigate("/dashboard");
       } else {

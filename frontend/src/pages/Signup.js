@@ -4,8 +4,8 @@ import { Mail, Lock, User } from "lucide-react";
 import Input from "../components/UI/Input";
 import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
-import { PasswordRules } from "../components/UI/PasswordRule";
-import GoogleAuthButton from "../components/UI/GoogleAuthButton";
+import { PasswordRules } from "../components/Auth/PasswordRule";
+import GoogleAuthButton from "../components/Auth/GoogleAuthButton";
 
 function Signup() {
   const [formData, setFormData] = useState({

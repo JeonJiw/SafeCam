@@ -23,7 +23,18 @@ export const authService = {
       throw error;
     }
   },
-  logout: () => {
-    localStorage.removeItem("access_token");
+  logout: async () => {
+    try {
+      await authAPI.logout();
+      localStorage.clear();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
+    }
+  },
+
+  isAuthenticated: () => {
+    return !!localStorage.getItem("token");
   },
 };

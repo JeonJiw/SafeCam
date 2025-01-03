@@ -18,6 +18,7 @@ export const useGoogleAuth = () => {
 
     if (token) {
       localStorage.setItem("token", token);
+      console.log("google auth");
       navigate("/dashboard");
     } else if (error) {
       setError("Google authentication failed");
