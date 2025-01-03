@@ -12,7 +12,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as crypto from 'crypto';
-
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -25,13 +24,28 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req) {
+  async googleAuthRedirect(@Req() req, @Res() res) {
     if (req.query.state !== req.session.state) {
       throw new UnauthorizedException('Invalid state parameter');
     }
     delete req.session.state;
 
-    return this.authService.googleLogin(req);
+    const result = await this.authService.googleLogin(req);
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+
+    if (result.success) {
+      const queryParams = new URLSearchParams({
+        access_token: result.data.access_token,
+        user: JSON.stringify(result.data.user),
+      }).toString();
+
+      return res.redirect(`${frontendUrl}/auth/callback?${queryParams}`);
+    } else {
+      return res.redirect(
+        `${frontendUrl}/auth/callback?error=${encodeURIComponent(result.message)}`,
+      );
+    }
   }
 
   @Post('signup')

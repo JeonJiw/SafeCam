@@ -1,28 +1,43 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authAPI } from "../api/auth";
 
 export const useGoogleAuth = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
 
   const handleGoogleAuth = () => {
-    const backendURL = "http://localhost:3002";
-    window.location.href = `${backendURL}/auth/google`;
+    authAPI.initiateGoogleAuth();
   };
 
-  // Callback after Google Auth
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    const error = urlParams.get("error");
+    const handleCallback = async () => {
+      const code = new URLSearchParams(window.location.search).get("code");
 
-    if (token) {
-      localStorage.setItem("token", token);
-      console.log("google auth");
-      navigate("/dashboard");
-    } else if (error) {
-      setError("Google authentication failed");
-    }
+      if (code) {
+        try {
+          console.log("callback with code:", code);
+          const response = await authAPI.handleGoogleCallback(
+            window.location.search
+          );
+          console.log("Backend response:", response);
+
+          if (response && response.data) {
+            localStorage.setItem("access_token", response.data.access_token);
+            localStorage.setItem("user", JSON.stringify(response.data.user));
+            navigate("/dashboard");
+          } else {
+            console.error("Unexpected response structure:", response);
+            setError("Invalid response format");
+          }
+        } catch (err) {
+          console.error("Detailed auth error:", err);
+          setError(err.message || "Authentication failed");
+        }
+      }
+    };
+
+    handleCallback();
   }, [navigate]);
 
   return { handleGoogleAuth, error };

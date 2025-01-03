@@ -1,28 +1,41 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 function AuthCallback() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { login } = useAuth();
 
   useEffect(() => {
-    if (location.pathname === "/auth/callback") {
-      const urlParams = new URLSearchParams(location.search);
-      const token = urlParams.get("token");
+    const handleAuth = () => {
+      const accessToken = decodeURIComponent(searchParams.get("access_token"));
+      const userInfo = searchParams.get("user");
 
-      if (token) {
-        localStorage.setItem("access_token", token);
+      console.log("AuthCallback: Extracted Access Token:", accessToken);
+      console.log("AuthCallback: User Info:", userInfo);
+
+      if (
+        accessToken &&
+        accessToken !== "null" &&
+        accessToken !== "undefined"
+      ) {
+        login(accessToken);
+
+        if (userInfo) {
+          localStorage.setItem("user_info", userInfo);
+        }
+
+        console.log("AuthCallback: Attempting to navigate to dashboard");
         navigate("/dashboard");
       } else {
+        console.error("AuthCallback: Invalid or missing access token");
         navigate("/login");
       }
-    }
-
-    // cleanup
-    return () => {
-      console.log("AuthCallback cleanup");
     };
-  }, [navigate, location]);
+
+    handleAuth();
+  }, [navigate, searchParams, login]);
 
   return <div>Google login...</div>;
 }
