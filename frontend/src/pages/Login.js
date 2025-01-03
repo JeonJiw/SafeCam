@@ -5,6 +5,7 @@ import Input from "../components/UI/Input";
 import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
 import GoogleAuthButton from "../components/UI/GoogleAuthButton";
+import { authService } from "../services/authService";
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -25,23 +26,18 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3002/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
-      console.log("login data:", data);
+      const response = await authService.login(formData);
+      console.log("login data:", response);
 
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
+      if (response.access_token) {
+        localStorage.setItem("access_token", response.access_token); // token -> access_token
         alert("Logged in successful!");
         navigate("/dashboard");
       } else {
-        setError("Sign up failed. Please try again.");
+        setError("Login failed. Please try again.");
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || "Login failed");
     }
   };
 
@@ -55,7 +51,7 @@ function Login() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <GoogleAuthButton />
+          <GoogleAuthButton type="login" />
 
           <form onSubmit={handleSubmit}>
             <ErrorMessage message={error} />
