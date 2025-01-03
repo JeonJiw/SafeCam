@@ -26,12 +26,9 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req) {
-    // state 검증
     if (req.query.state !== req.session.state) {
       throw new UnauthorizedException('Invalid state parameter');
     }
-
-    // 검증 후 세션의 state 삭제
     delete req.session.state;
 
     return this.authService.googleLogin(req);

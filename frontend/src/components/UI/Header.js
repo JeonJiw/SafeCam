@@ -3,11 +3,15 @@ import { Camera, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { authService } from "../../services/authService";
 import Button from "./Button";
+import { useAuth } from "../../context/AuthContext";
 
 function Header() {
+  const { isAuthenticated, logout } = useAuth();
+
   const handleLogout = async () => {
     try {
       await authService.logout();
+      logout();
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -50,7 +54,7 @@ function Header() {
             >
               Settings
             </Link>
-            {authService.isAuthenticated() && (
+            {isAuthenticated && (
               <Button onClick={handleLogout} variant="secondary">
                 Logout
               </Button>

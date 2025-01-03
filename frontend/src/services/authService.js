@@ -13,10 +13,8 @@ export const authService = {
   login: async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
-      console.log("Login response:", response.data);
       if (response.data.access_token) {
         localStorage.setItem("access_token", response.data.access_token);
-        console.log("Stored token:", localStorage.getItem("access_token"));
       }
       return response.data;
     } catch (error) {
@@ -35,6 +33,6 @@ export const authService = {
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem("token");
+    return !!localStorage.getItem("access_token");
   },
 };

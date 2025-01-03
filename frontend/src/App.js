@@ -17,41 +17,44 @@ import Header from "./components/UI/Header";
 import Footer from "./components/UI/Footer";
 import Devices from "./pages/Devices";
 import AuthCallBack from "./components/Auth/AuthCallBack";
-
-const PrivateRoute = () => {
-  const isAuthenticated = localStorage.getItem("token");
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
-};
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 function App() {
   return (
-    <Router>
-      <Header />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/auth/callback" element={<AuthCallBack />} />
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+    <AuthProvider>
+      <Router>
+        <Header />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/auth/callback" element={<AuthCallBack />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-        {/* Protected Routes */}
-        <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user/*" element={<User />}>
-            <Route path="devices" element={<Devices />} />
-            <Route path="devicesdetails" element={<DeviceDetails />} />
-            <Route path="notification" element={<Notification />} />
+          {/* Protected Routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/user/*" element={<User />}>
+              <Route path="devices" element={<Devices />} />
+              <Route path="devicesdetails" element={<DeviceDetails />} />
+              <Route path="notification" element={<Notification />} />
+            </Route>
+            <Route path="/monitoring" element={<Monitoring />} />
+            <Route path="/devices/:id" element={<DeviceDetails />} />
           </Route>
-          <Route path="/monitoring" element={<Monitoring />} />
-          <Route path="/devices/:id" element={<DeviceDetails />} />
-        </Route>
 
-        {/* 404 Page */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <Footer />
-    </Router>
+          {/* 404 Page */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </AuthProvider>
   );
 }
+
+const PrivateRoute = () => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};
 
 export default App;
