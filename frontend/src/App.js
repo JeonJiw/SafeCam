@@ -16,6 +16,7 @@ import DeviceDetails from "./pages/DeviceDetails";
 import Header from "./components/UI/Header";
 import Footer from "./components/UI/Footer";
 import Devices from "./pages/Devices";
+import AuthCallback from "./components/Auth/AuthCallBack";
 
 const PrivateRoute = () => {
   const isAuthenticated = localStorage.getItem("token");
@@ -28,6 +29,7 @@ function App() {
       <Header />
       <Routes>
         {/* Public Routes */}
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
