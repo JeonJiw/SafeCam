@@ -6,8 +6,10 @@ import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
 import GoogleAuthButton from "../components/Auth/GoogleAuthButton";
 import { authService } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -27,10 +29,9 @@ function Login() {
     e.preventDefault();
     try {
       const response = await authService.login(formData);
-      console.log("login data:", response);
 
       if (response.access_token) {
-        localStorage.setItem("access_token", response.access_token);
+        login(response.access_token);
         alert("Logged in successful!");
         navigate("/dashboard");
       } else {
