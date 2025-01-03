@@ -7,12 +7,13 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token"); // 또는 sessionStorage
-    console.log("현재 토큰:", token);
+    const token = localStorage.getItem("access_token");
+    console.log("Current token:", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

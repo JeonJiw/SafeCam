@@ -14,6 +14,16 @@ function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    console.log("Dashboard Token Check:", token);
+
+    if (!token) {
+      console.error("No token found, redirecting to login");
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
