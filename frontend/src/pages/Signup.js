@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, AlertCircle } from "lucide-react";
+import { Mail, Lock, User } from "lucide-react";
 import Input from "../components/UI/Input";
 import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
@@ -69,8 +69,18 @@ function Signup() {
       return;
     }
     try {
-      // API Call
-      navigate("/login");
+      const response = await fetch("http://localhost:3002/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      console.log("res: ", response);
+      if (response.ok) {
+        alert("Sign up successful!");
+        navigate("/login");
+      } else {
+        setError("Sign up failed. Please try again.");
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -86,7 +96,7 @@ function Signup() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <GoogleAuthButton />
+          <GoogleAuthButton type="signup" />
 
           {/* Regular Sign Up Form */}
           <form onSubmit={handleSubmit}>

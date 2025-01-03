@@ -9,10 +9,13 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import User from "./pages/User";
+import Dashboard from "./pages/Dashboard";
+import Notification from "./pages/Notification";
 import Monitoring from "./pages/Monitoring";
-import ViewStream from "./pages/ViewStream";
+import DeviceDetails from "./pages/DeviceDetails";
 import Header from "./components/UI/Header";
 import Footer from "./components/UI/Footer";
+import Devices from "./pages/Devices";
 
 const PrivateRoute = () => {
   const isAuthenticated = localStorage.getItem("token");
@@ -31,9 +34,14 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
-          <Route path="/user" element={<User />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/user/*" element={<User />}>
+            <Route path="devices" element={<Devices />} />
+            <Route path="devicesdetails" element={<DeviceDetails />} />
+            <Route path="notification" element={<Notification />} />
+          </Route>
           <Route path="/monitoring" element={<Monitoring />} />
-          <Route path="/view/:id" element={<ViewStream />} />
+          <Route path="/devices/:id" element={<DeviceDetails />} />
         </Route>
 
         {/* 404 Page */}
