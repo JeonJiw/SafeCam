@@ -32,8 +32,8 @@ function Dashboard() {
         console.log("Devices data received:", devicesData);
         setDevices(devicesData);
 
-        // const activitiesData = await activityService.fetchRecentActivities();
-        // console.log("Activities data received:", activitiesData);
+        //const activitiesData = await activityService.fetchRecentActivities();
+        //console.log("Activities data received:", activitiesData);
         // setActivities([]);
         setActivities(mockActivities);
       } catch (error) {
