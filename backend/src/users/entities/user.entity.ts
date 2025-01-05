@@ -1,3 +1,4 @@
+import { Activity } from 'src/activities/entities/activity.entity';
 import { Device } from 'src/devices/entities/device.entity';
 import {
   Column,
@@ -32,4 +33,7 @@ export class User {
 
   @OneToMany(() => Device, (device) => device.user)
   devices: Device[];
+
+  @OneToMany(() => Activity, (activity) => activity.user)
+  activities: Activity[];
 }

@@ -1,3 +1,4 @@
+import { Activity } from 'src/activities/entities/activity.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   Column,
@@ -7,6 +8,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -48,6 +50,9 @@ export class Device {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => Activity, (activity) => activity.device)
+  activity: Activity[];
 
   constructor() {
     this.deviceId = uuidv4();
