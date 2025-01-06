@@ -67,9 +67,14 @@ function Dashboard() {
 
       {/* Devices Grid */}
       {devices.length > 0 ? (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">My Devices</h2>
-          <RecentActivity devices={devices} />{" "}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {devices.map((device) => (
+            <DeviceCard
+              key={device.deviceId}
+              device={device}
+              onStartMonitoring={(id) => navigate(`user/devices/${id}`)}
+            />
+          ))}
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow p-6">
@@ -77,16 +82,6 @@ function Dashboard() {
           <p>No devices</p>
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {devices.map((device) => (
-          <DeviceCard
-            key={device.deviceId}
-            device={device}
-            onStartMonitoring={(id) => navigate(`user/devices/${id}`)}
-          />
-        ))}
-      </div>
 
       {/* Recent Activity */}
       <div className="bg-white rounded-lg shadow p-6">
