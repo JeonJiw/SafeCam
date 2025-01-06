@@ -16,9 +16,11 @@ function RecentActivity({ activities }) {
           className="flex items-center p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
         >
           <div className="flex-1">
-            <p className="font-medium">{activity.deviceName}</p>
+            <p className="font-medium">
+              {activity.device.deviceName} | {activity.device.location}
+            </p>
             <p className="text-sm text-gray-600">
-              {activity.type} - {formatDate(activity.timestamp)}
+              "{activity.activityType}" - {formatDate(activity.timestamp)}
             </p>
           </div>
           <span className="text-blue-600">View Details →</span>

@@ -4,7 +4,6 @@ import DeviceCard from "../components/UI/DeviceCard";
 import RecentActivity from "../components/UI/RecentActivity";
 import { deviceService } from "../services/deviceService";
 import { activityService } from "../services/activityService";
-import { mockActivities } from "../mockData";
 
 function Dashboard() {
   const [devices, setDevices] = useState([]);
@@ -31,7 +30,6 @@ function Dashboard() {
         const activitiesData = await activityService.fetchRecentActivities();
         console.log("Activities data received:", activitiesData);
         setActivities(activitiesData);
-        //setActivities(mockActivities);
       } catch (error) {
         console.error("Dashboard data fetch error:", error);
         setError(error.message);
