@@ -27,9 +27,7 @@ export const deviceService = {
       return response.data;
     } catch (error) {
       if (error.response?.status === 401) {
-        // 토큰이 만료되었거나 유효하지 않은 경우
         localStorage.removeItem("access_token");
-        // 로그인 페이지로 리다이렉트
         window.location.href = "/login";
       }
       throw error;

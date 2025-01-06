@@ -4,7 +4,6 @@ import DeviceCard from "../components/UI/DeviceCard";
 import RecentActivity from "../components/UI/RecentActivity";
 import { deviceService } from "../services/deviceService";
 import { activityService } from "../services/activityService";
-import { mockActivities } from "../mockData";
 
 function Dashboard() {
   const [devices, setDevices] = useState([]);
@@ -15,7 +14,6 @@ function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    console.log("Dashboard Token Check:", token);
 
     if (!token) {
       console.error("No token found, redirecting to login");
@@ -27,15 +25,11 @@ function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-
         const devicesData = await deviceService.fetchMyDevices();
-        console.log("Devices data received:", devicesData);
         setDevices(devicesData);
-
-        // const activitiesData = await activityService.fetchRecentActivities();
-        // console.log("Activities data received:", activitiesData);
-        // setActivities([]);
-        setActivities(mockActivities);
+        const activitiesData = await activityService.fetchRecentActivities();
+        console.log("Activities data received:", activitiesData);
+        setActivities(activitiesData);
       } catch (error) {
         console.error("Dashboard data fetch error:", error);
         setError(error.message);

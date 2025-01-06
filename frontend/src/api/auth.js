@@ -11,9 +11,8 @@ export const authAPI = {
 
   handleGoogleCallback: async (searchString) => {
     try {
-      console.log("ser: ", searchString);
       const response = await api.get(`/auth/google/callback${searchString}`);
-      console.log("API Response:", response); // 응답 로그 추가
+
       return response;
     } catch (error) {
       console.error("API Error:", error);
