@@ -5,7 +5,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DevicesModule } from './devices/devices.module';
 import { ActivitiesModule } from './activities/activities.module';
-import { EventsGateway } from './events/events.gateway';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { EventsGateway } from './events/events.gateway';
     UsersModule,
     DevicesModule,
     ActivitiesModule,
+    EventsModule,
   ],
-  providers: [EventsGateway],
 })
 export class AppModule {}
