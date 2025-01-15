@@ -1,0 +1,16 @@
+# YOLOv5 related (어디에 있든 무시)
+**/yolov5/
+**/*.pt
+**/.cache/
+**/__pycache__/
+**/runs/
+**/*.onnx
+**/ultralytics/
+
+# Python virtual environments
+**/venv/
+**/.env/
+**/env/
+
+# Miniconda
+**/miniconda3/
