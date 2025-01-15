@@ -50,9 +50,31 @@ const Streaming = () => {
         // MediaRecorder 설정
         const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
-        recorder.ondataavailable = (event) => {
+        recorder.ondataavailable = async (event) => {
           if (socketRef.current) {
-            socketRef.current.emit("video-chunk", event.data); // 비디오 청크 전송
+            try {
+              // Blob을 캔버스에 그리고 JPEG로 변환
+              const videoTrack = stream.getVideoTracks()[0];
+              const imageCapture = new ImageCapture(videoTrack);
+              const bitmap = await imageCapture.grabFrame();
+
+              const canvas = document.createElement("canvas");
+              canvas.width = bitmap.width;
+              canvas.height = bitmap.height;
+              const context = canvas.getContext("2d");
+              context.drawImage(bitmap, 0, 0);
+
+              // JPEG 형식으로 변환
+              canvas.toBlob(
+                (blob) => {
+                  socketRef.current.emit("video-frame", blob);
+                },
+                "image/jpeg",
+                0.8
+              );
+            } catch (error) {
+              console.error("Error capturing frame:", error);
+            }
           }
         };
 
@@ -61,7 +83,7 @@ const Streaming = () => {
         };
 
         mediaRecorderRef.current = recorder; // useRef에 mediaRecorder 저장
-        recorder.start(100); // 100ms마다 비디오 청크 전송
+        recorder.start(500); //
       } catch (error) {
         console.error("Error accessing webcam:", error);
         setIsStreaming(false);
