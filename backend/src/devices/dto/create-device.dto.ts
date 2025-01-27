@@ -3,11 +3,11 @@ import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 export class CreateDeviceDto {
   @IsString()
   @IsNotEmpty()
-  deviceName: string;
+  deviceId: string;
 
-  @IsOptional()
   @IsString()
-  ipAddress?: string;
+  @IsNotEmpty()
+  deviceName: string;
 
   @IsOptional()
   @IsString()
@@ -16,8 +16,4 @@ export class CreateDeviceDto {
   @IsOptional()
   @IsBoolean()
   cameraEnabled?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  recordingEnabled?: boolean;
 }

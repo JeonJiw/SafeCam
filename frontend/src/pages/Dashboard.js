@@ -4,12 +4,14 @@ import DeviceCard from "../components/UI/DeviceCard";
 import RecentActivity from "../components/UI/RecentActivity";
 import { deviceService } from "../services/deviceService";
 import { activityService } from "../services/activityService";
+import AddDeviceModal from "../components/Camera/AddDeviceModal";
 
 function Dashboard() {
   const [devices, setDevices] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddDevice, setShowAddDevice] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,6 +43,10 @@ function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  const handleDeviceAdded = (newDevice) => {
+    setDevices((prev) => [...prev, newDevice]);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -50,12 +56,12 @@ function Dashboard() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="space-x-4">
-          <Link
-            to="/user/devices"
+          <button
+            onClick={() => setShowAddDevice(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg"
           >
             + Add Device
-          </Link>
+          </button>
           <Link
             to="/user/notifications"
             className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg"
@@ -92,6 +98,14 @@ function Dashboard() {
           <p>No recent activities</p>
         )}
       </div>
+
+      {/* Add Device Modal */}
+      {showAddDevice && (
+        <AddDeviceModal
+          onClose={() => setShowAddDevice(false)}
+          onSuccess={handleDeviceAdded}
+        />
+      )}
     </div>
   );
 }
