@@ -28,7 +28,15 @@ export class DevicesController {
     @Req() req,
   ): Promise<Device> {
     const userId = req.user.userId;
+    console.log('CREATE');
+    console.log('req.user.userId:', req.user.userId);
     return await this.devicesService.create(createDeviceDto, userId);
+  }
+
+  @Get('mydevices/:deviceId')
+  async findByHardwareId(@Param('deviceId') deviceId: string): Promise<Device> {
+    console.log(1234);
+    return await this.devicesService.findByHardwareId(deviceId);
   }
 
   @Get('mydevices')

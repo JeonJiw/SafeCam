@@ -29,6 +29,8 @@ export class DevicesService {
     const device = this.devicesRepository.create(createDeviceDto);
     const deviceUser = await this.usersService.findOne(userId);
     device.user = deviceUser;
+    console.log('service');
+    console.log('device:', device);
     return await this.devicesRepository.save(device);
   }
 
@@ -101,5 +103,17 @@ export class DevicesService {
     if (result.affected === 0) {
       throw new NotFoundException(`Device with ID ${id} not found`);
     }
+  }
+
+  async findByHardwareId(deviceId: string): Promise<Device | undefined> {
+    console.log(123);
+    const device = await this.devicesRepository.findOne({
+      where: { deviceId },
+    });
+    if (!device) {
+      throw new NotFoundException('Device not found');
+    }
+
+    return device;
   }
 }

@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { DevicesModule } from './devices/devices.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { EventsModule } from './events/events.module';
+import { MonitoringModule } from './monitoring/monotoring.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { EventsModule } from './events/events.module';
     DevicesModule,
     ActivitiesModule,
     EventsModule,
+    MonitoringModule,
   ],
 })
 export class AppModule {}
