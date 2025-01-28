@@ -35,7 +35,6 @@ export class DevicesController {
 
   @Get('mydevices/:deviceId')
   async findByHardwareId(@Param('deviceId') deviceId: string): Promise<Device> {
-    console.log(1234);
     return await this.devicesService.findByHardwareId(deviceId);
   }
 
@@ -47,7 +46,6 @@ export class DevicesController {
   @Get()
   @UseGuards(AdminGuard)
   async findAllDevices(@Req() req): Promise<Device[]> {
-    console.log(req);
     return await this.devicesService.findAllDevices();
   }
 

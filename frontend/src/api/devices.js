@@ -6,4 +6,5 @@ export const deviceAPI = {
   create: (data) => api.post("/devices", data),
   update: (deviceId, data) => api.put(`/devices/${deviceId}`, data),
   delete: (deviceId) => api.delete(`/devices/${deviceId}`),
+  findByHardwareId: (deviceId) => api.get(`/devices/mydevices/${deviceId}`),
 };

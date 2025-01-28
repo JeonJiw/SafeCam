@@ -1,11 +1,34 @@
+// Streaming.js
 import React, { useState, useEffect, useRef } from "react";
+import StartMonitoringModal from "./StartMonitoringModal";
+import StopStreamingModal from "./StopStreamingModal";
+import { monitoringAPI } from "../../api/monitoring";
 
 const Streaming = ({ socket }) => {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [showStopModal, setShowStopModal] = useState(false);
+  const [showStartModal, setShowStartModal] = useState(true);
+  const [verificationCode, setVerificationCode] = useState(null);
+  const [deviceId, setDeviceId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const stopStreaming = () => {
+  useEffect(() => {
+    const checkAndResetSession = async () => {
+      try {
+        await monitoringAPI.resetSession();
+      } catch (error) {
+        console.error("Error resetting session:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAndResetSession();
+  }, []);
+
+  const cleanupMediaResources = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
@@ -14,23 +37,24 @@ const Streaming = ({ socket }) => {
       stream.getTracks().forEach((track) => track.stop());
     }
     setIsStreaming(false);
+    if (socket) {
+      socket.emit("streaming-finished");
+    }
   };
 
-  useEffect(() => {
-    if (!socket) return;
+  const startStreaming = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      videoRef.current.srcObject = stream;
+      setIsStreaming(true);
 
-    const startStreaming = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false,
-        });
-        videoRef.current.srcObject = stream;
-        setIsStreaming(true);
+      const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
-        const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
-
-        recorder.ondataavailable = async (event) => {
+      recorder.ondataavailable = async (event) => {
+        if (socket) {
           try {
             const videoTrack = stream.getVideoTracks()[0];
             const imageCapture = new ImageCapture(videoTrack);
@@ -52,19 +76,62 @@ const Streaming = ({ socket }) => {
           } catch (error) {
             console.error("Error capturing frame:", error);
           }
-        };
+        }
+      };
 
-        mediaRecorderRef.current = recorder;
-        recorder.start(500);
-      } catch (error) {
-        console.error("Error accessing webcam:", error);
-        setIsStreaming(false);
+      mediaRecorderRef.current = recorder;
+      recorder.start(500);
+    } catch (error) {
+      console.error("Error accessing webcam:", error);
+      setIsStreaming(false);
+    }
+  };
+
+  const handleStartMonitoring = (code, deviceId) => {
+    setVerificationCode(code);
+    setDeviceId(deviceId);
+    setShowStartModal(false);
+    startStreaming();
+  };
+
+  const handleStopStreaming = async (inputCode) => {
+    try {
+      if (inputCode !== verificationCode) {
+        throw new Error("Invalid verification code");
+      }
+      // deviceId가 존재하는지 확인
+      if (!deviceId) {
+        console.error("DeviceId is missing:", deviceId);
+        throw new Error("Device ID is required");
+      }
+
+      console.log("Stopping monitoring for device:", deviceId); // 디버깅용 로그
+
+      await monitoringAPI.endMonitoring({
+        deviceId: deviceId,
+        code: inputCode,
+      });
+
+      cleanupMediaResources();
+      setShowStopModal(false);
+      return true;
+    } catch (error) {
+      console.error("Error stopping stream:", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (isStreaming) {
+        cleanupMediaResources();
       }
     };
+  }, [isStreaming]);
 
-    startStreaming();
-    return () => stopStreaming();
-  }, [socket]);
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="relative">
@@ -75,6 +142,7 @@ const Streaming = ({ socket }) => {
         muted
         className="w-full rounded-lg"
       />
+
       <div className="absolute top-2 right-2">
         {isStreaming ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -86,6 +154,31 @@ const Streaming = ({ socket }) => {
           </span>
         )}
       </div>
+
+      {isStreaming && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowStopModal(true)}
+            className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+          >
+            Stop Streaming
+          </button>
+        </div>
+      )}
+
+      {showStartModal && (
+        <StartMonitoringModal
+          onClose={() => setShowStartModal(false)}
+          onStart={handleStartMonitoring}
+        />
+      )}
+
+      {showStopModal && (
+        <StopStreamingModal
+          onClose={() => setShowStopModal(false)}
+          onVerify={handleStopStreaming}
+        />
+      )}
     </div>
   );
 };

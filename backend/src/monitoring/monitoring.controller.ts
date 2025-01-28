@@ -34,7 +34,11 @@ export class MonitoringController {
 
   @Post('end')
   async endMonitoring(@Body() verifyCodeDto: VerifyCodeDto, @Req() req) {
-    const userId = req.user.userId;
+    console.log('Received end monitoring request:', {
+      deviceId: verifyCodeDto.deviceId,
+      code: verifyCodeDto.code,
+    });
+
     return this.monitoringService.endMonitoring(
       verifyCodeDto.deviceId,
       verifyCodeDto.code,

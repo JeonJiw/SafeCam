@@ -13,7 +13,16 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class MonitoringService {
-  private sessions = new Map();
+  private sessions = new Map<
+    string,
+    {
+      userId: number;
+      verificationCode: string;
+      startTime: Date;
+      status: string;
+      detectionLogs?: any[];
+    }
+  >();
 
   constructor(
     private emailService: EmailService,
@@ -26,6 +35,9 @@ export class MonitoringService {
     createMonitoringDto: CreateMonitoringDto,
   ) {
     const { deviceId, verificationCode } = createMonitoringDto;
+    // 디버깅을 위한 로그 추가
+    console.log('Starting monitoring for device:', deviceId);
+    console.log('Current sessions:', this.sessions);
 
     if (this.sessions.has(deviceId)) {
       throw new ConflictException('Active monitoring session already exists');
@@ -39,19 +51,20 @@ export class MonitoringService {
     if (!device) {
       throw new NotFoundException('Device not found');
     }
-    console.log('device:', device);
-    console.log('userId:', userId);
+
     if (device.user.id !== userId) {
       throw new ConflictException('Not authorized to monitor this device');
     }
 
+    // 세션 저장시 명확한 타입 지정
     this.sessions.set(deviceId, {
       userId,
       verificationCode,
       startTime: new Date(),
       status: 'active',
+      detectionLogs: [],
     });
-
+    console.log('sessions Map (after start):', this.sessions); // 추가
     try {
       await this.emailService.sendVerificationCode(verificationCode, userId);
       return {
@@ -66,22 +79,32 @@ export class MonitoringService {
 
   async endMonitoring(deviceId: string, code: string) {
     const session = this.sessions.get(deviceId);
+    console.log('Ending monitoring for device:', deviceId);
+    console.log('Available sessions:', Array.from(this.sessions.keys()));
 
     if (!session) {
       throw new NotFoundException('No active monitoring session found');
     }
 
+    console.log('Comparing codes:', {
+      provided: code,
+      stored: session.verificationCode,
+    });
+
+    console.log('session.verificationCode:', session.verificationCode);
     if (session.verificationCode !== code) {
       return {
         success: false,
         message: 'Invalid verification code',
       };
     }
-
+    const sessionInfo = { ...session };
     this.sessions.delete(deviceId);
+
     return {
       success: true,
       message: 'Monitoring ended successfully',
+      sessionInfo,
     };
   }
 
