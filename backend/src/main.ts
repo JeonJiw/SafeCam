@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import rateLimit from 'express-rate-limit';
 import * as session from 'express-session';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import * as ngrok from 'ngrok';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,7 +26,24 @@ async function bootstrap() {
     }),
   );
   app.useWebSocketAdapter(new IoAdapter(app));
-  await app.listen(3002);
-  console.log('Server is listening on port 3002');
+  const port = 3002;
+  await app.listen(port);
+  console.log(`Server is listening on port ${port}`);
+
+  // 개발 환경에서 ngrok 설정
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const url = await ngrok.connect({
+        addr: port,
+        authtoken: process.env.NGROK_AUTH_TOKEN,
+      });
+      console.log('Ngrok tunnel is running:', url);
+
+      // 환경 변수에 ngrok URL 저장
+      process.env.PUBLIC_URL = url;
+    } catch (error) {
+      console.error('Ngrok tunnel error:', error);
+    }
+  }
 }
 bootstrap();
