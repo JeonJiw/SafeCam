@@ -12,11 +12,33 @@ const Monitoring = () => {
   });
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3002");
+    const newSocket = io(process.env.REACT_APP_BACKEND_URL, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+      path: "/socket.io",
+      extraHeaders: {
+        "Access-Control-Allow-Origin": "*",
+      },
+
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    newSocket.on("connect", () => {
+      console.log("Socket connected");
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+
     setSocket(newSocket);
 
     return () => {
-      if (newSocket) newSocket.close();
+      if (newSocket) {
+        newSocket.close();
+      }
     };
   }, []);
 

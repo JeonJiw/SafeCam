@@ -20,15 +20,16 @@ export class EmailService {
     });
   }
 
-  async sendVerificationCode(verificationCode: string, userId: number) {
+  async sendVerificationCode(
+    verificationCode: string,
+    userId: number,
+    monitoringUrl: string,
+  ) {
     try {
       const user = await this.usersService.findOne(userId);
       if (!user) {
         throw new Error('User not found');
       }
-
-      // NgRok URL 사용
-      const monitoringUrl = `${process.env.PUBLIC_URL}/monitoring/${userId}`;
 
       const mailOptions = {
         from: this.configService.get('EMAIL_USER'),

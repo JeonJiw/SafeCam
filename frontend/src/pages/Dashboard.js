@@ -15,8 +15,9 @@ function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("7. Dashboard mounted");
     const token = localStorage.getItem("access_token");
-
+    console.log("8. Token in dashboard:", token);
     if (!token) {
       console.error("No token found, redirecting to login");
       navigate("/login");

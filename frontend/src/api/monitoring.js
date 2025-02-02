@@ -10,5 +10,6 @@ export const monitoringAPI = {
     }),
   resetSession: () => api.post("/monitoring/reset-session"),
   endMonitoring: (data) => api.post("/monitoring/end", data),
+  getStreamingSession: (deviceId) => api.get(`/monitoring/stream/${deviceId}`),
   //getReport: () => api.get("/monitoring/report"),
 };

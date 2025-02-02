@@ -18,7 +18,9 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {
+    console.log('Starting Google Auth');
     const state = crypto.randomBytes(16).toString('hex');
+    console.log('Generated state:', state);
     req.session.state = state;
   }
 
@@ -32,15 +34,16 @@ export class AuthController {
 
     const result = await this.authService.googleLogin(req);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+    const frontendUrl = process.env.FRONTEND_URL; //3000
 
     if (result.success) {
       const queryParams = new URLSearchParams({
         access_token: result.data.access_token,
         user: JSON.stringify(result.data.user),
       }).toString();
+      const redirectUrl = `${frontendUrl}/auth/callback?${queryParams}`;
 
-      return res.redirect(`${frontendUrl}/auth/callback?${queryParams}`);
+      return res.redirect(redirectUrl);
     } else {
       return res.redirect(
         `${frontendUrl}/auth/callback?error=${encodeURIComponent(result.message)}`,
@@ -50,6 +53,7 @@ export class AuthController {
 
   @Post('signup')
   async signup(@Body() createUserDto: CreateUserDto) {
+    console.log('createUserDto:', createUserDto);
     return this.authService.signup(createUserDto);
   }
 

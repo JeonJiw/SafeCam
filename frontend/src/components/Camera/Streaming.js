@@ -1,5 +1,5 @@
 // Streaming.js
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import StartMonitoringModal from "./StartMonitoringModal";
 import StopStreamingModal from "./StopStreamingModal";
 import { monitoringAPI } from "../../api/monitoring";
@@ -28,7 +28,7 @@ const Streaming = ({ socket }) => {
     checkAndResetSession();
   }, []);
 
-  const cleanupMediaResources = () => {
+  const cleanupMediaResources = useCallback(() => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
@@ -40,7 +40,7 @@ const Streaming = ({ socket }) => {
     if (socket) {
       socket.emit("streaming-finished");
     }
-  };
+  }, [socket]);
 
   const startStreaming = async () => {
     try {
@@ -99,13 +99,11 @@ const Streaming = ({ socket }) => {
       if (inputCode !== verificationCode) {
         throw new Error("Invalid verification code");
       }
-      // deviceId가 존재하는지 확인
+
       if (!deviceId) {
         console.error("DeviceId is missing:", deviceId);
         throw new Error("Device ID is required");
       }
-
-      console.log("Stopping monitoring for device:", deviceId); // 디버깅용 로그
 
       await monitoringAPI.endMonitoring({
         deviceId: deviceId,
@@ -127,7 +125,7 @@ const Streaming = ({ socket }) => {
         cleanupMediaResources();
       }
     };
-  }, [isStreaming]);
+  }, [isStreaming, cleanupMediaResources]);
 
   if (loading) {
     return <div>Loading...</div>;

@@ -18,6 +18,7 @@ import Footer from "./components/UI/Footer";
 import Devices from "./pages/Devices";
 import AuthCallBack from "./components/Auth/AuthCallBack";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import StreamingPage from "./pages/StreamingPage";
 
 function App() {
   return (
@@ -25,8 +26,8 @@ function App() {
       <Router>
         <Header />
         <Routes>
-          {/* Public Routes */}
           <Route path="/auth/callback" element={<AuthCallBack />} />
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -38,6 +39,7 @@ function App() {
               <Route path="devices" element={<Devices />} />
               <Route path="devicesdetails" element={<DeviceDetails />} />
               <Route path="notification" element={<Notification />} />
+              <Route path="stream/:deviceId" element={<StreamingPage />} />
             </Route>
             <Route path="/monitoring" element={<Monitoring />} />
             <Route path="/devices/:id" element={<DeviceDetails />} />

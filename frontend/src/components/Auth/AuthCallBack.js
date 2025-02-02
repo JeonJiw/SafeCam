@@ -8,13 +8,14 @@ function AuthCallback() {
   const { login } = useAuth();
 
   useEffect(() => {
+    console.log("AuthCallback useEffect running");
+    console.log("Search params:", Object.fromEntries(searchParams.entries()));
+
     const handleAuth = () => {
       const accessToken = decodeURIComponent(searchParams.get("access_token"));
       const userInfo = searchParams.get("user");
 
-      console.log("AuthCallback: Extracted Access Token:", accessToken);
-      console.log("AuthCallback: User Info:", userInfo);
-
+      console.log("Received tokens:", { accessToken, userInfo });
       if (
         accessToken &&
         accessToken !== "null" &&

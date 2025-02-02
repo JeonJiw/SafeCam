@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { EmailService } from './email.service';
 import { Device } from 'src/devices/entities/device.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MonitoringService {
@@ -28,6 +30,7 @@ export class MonitoringService {
     private emailService: EmailService,
     @InjectRepository(Device)
     private devicesRepository: Repository<Device>,
+    private configService: ConfigService,
   ) {}
 
   async startMonitoring(
@@ -35,28 +38,17 @@ export class MonitoringService {
     createMonitoringDto: CreateMonitoringDto,
   ) {
     const { deviceId, verificationCode } = createMonitoringDto;
-    // 디버깅을 위한 로그 추가
-    console.log('Starting monitoring for device:', deviceId);
-    console.log('Current sessions:', this.sessions);
 
-    if (this.sessions.has(deviceId)) {
-      throw new ConflictException('Active monitoring session already exists');
+    const existingSession = Array.from(this.sessions.values()).find(
+      (session) => session.userId === userId,
+    );
+
+    if (existingSession) {
+      throw new ConflictException(
+        'You already have an active streaming session',
+      );
     }
 
-    const device = await this.devicesRepository.findOne({
-      where: { deviceId },
-      relations: ['user'],
-    });
-
-    if (!device) {
-      throw new NotFoundException('Device not found');
-    }
-
-    if (device.user.id !== userId) {
-      throw new ConflictException('Not authorized to monitor this device');
-    }
-
-    // 세션 저장시 명확한 타입 지정
     this.sessions.set(deviceId, {
       userId,
       verificationCode,
@@ -64,9 +56,17 @@ export class MonitoringService {
       status: 'active',
       detectionLogs: [],
     });
-    console.log('sessions Map (after start):', this.sessions); // 추가
+
     try {
-      await this.emailService.sendVerificationCode(verificationCode, userId);
+      const Url = process.env.FRONTEND_URL;
+      const monitoringUrl = `${Url}/monitoring`;
+
+      await this.emailService.sendVerificationCode(
+        verificationCode,
+        userId,
+        monitoringUrl,
+      );
+
       return {
         success: true,
         message: 'Monitoring session started successfully',
@@ -76,7 +76,19 @@ export class MonitoringService {
       throw error;
     }
   }
+  async checkStreamAccess(deviceId: string, userId: number) {
+    const session = this.sessions.get(deviceId);
 
+    if (!session) {
+      throw new NotFoundException('No active streaming session found');
+    }
+
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this stream');
+    }
+
+    return session;
+  }
   async endMonitoring(deviceId: string, code: string) {
     const session = this.sessions.get(deviceId);
     console.log('Ending monitoring for device:', deviceId);

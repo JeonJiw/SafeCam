@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -73,7 +77,29 @@ export class AuthService {
   }
 
   async signup(createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+    try {
+      const existingUser = await this.usersService.findByEmail(
+        createUserDto.email,
+      );
+      console.log('exi');
+
+      if (existingUser) {
+        throw new ConflictException('This email is already registered');
+      }
+
+      return await this.usersService.create(createUserDto);
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+
+      if (error?.message?.includes('duplicate key')) {
+        throw new ConflictException('This email is already registered');
+      }
+
+      console.error('Signup error:', error);
+      throw new InternalServerErrorException('Could not create user');
+    }
   }
 
   async login(user: any) {

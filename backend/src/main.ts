@@ -3,21 +3,37 @@ import { AppModule } from './app.module';
 import rateLimit from 'express-rate-limit';
 import * as session from 'express-session';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import * as ngrok from 'ngrok';
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL,
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true,
+};
+
+class CustomIoAdapter extends IoAdapter {
+  createIOServer(port: number, options?: any) {
+    const server = super.createIOServer(port, {
+      ...options,
+      cors: corsOptions,
+      allowEIO3: true,
+      transports: ['websocket', 'polling'],
+    });
+    return server;
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors({
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
-    credentials: true,
-  });
+
+  app.enableCors(corsOptions);
+
   app.use(
     rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 100,
     }),
   );
+
   app.use(
     session({
       secret: process.env.EXPRESS_SESSION_SECRET,
@@ -25,25 +41,12 @@ async function bootstrap() {
       saveUninitialized: false,
     }),
   );
-  app.useWebSocketAdapter(new IoAdapter(app));
+
+  app.useWebSocketAdapter(new CustomIoAdapter(app));
+
   const port = 3002;
   await app.listen(port);
-  console.log(`Server is listening on port ${port}`);
-
-  // 개발 환경에서 ngrok 설정
-  if (process.env.NODE_ENV === 'development') {
-    try {
-      const url = await ngrok.connect({
-        addr: port,
-        authtoken: process.env.NGROK_AUTH_TOKEN,
-      });
-      console.log('Ngrok tunnel is running:', url);
-
-      // 환경 변수에 ngrok URL 저장
-      process.env.PUBLIC_URL = url;
-    } catch (error) {
-      console.error('Ngrok tunnel error:', error);
-    }
-  }
+  console.log(`Server is running on http://localhost:${port}`);
 }
+
 bootstrap();

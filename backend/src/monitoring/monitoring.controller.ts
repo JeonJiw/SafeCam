@@ -32,6 +32,12 @@ export class MonitoringController {
     return this.monitoringService.startMonitoring(userId, createMonitoringDto);
   }
 
+  @Get('stream/:deviceId')
+  async accessStream(@Param('deviceId') deviceId: string, @Req() req) {
+    const userId = req.user.userId;
+    return this.monitoringService.checkStreamAccess(deviceId, userId);
+  }
+
   @Post('end')
   async endMonitoring(@Body() verifyCodeDto: VerifyCodeDto, @Req() req) {
     console.log('Received end monitoring request:', {

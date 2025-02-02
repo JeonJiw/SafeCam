@@ -6,6 +6,7 @@ import Button from "../components/UI/Button";
 import ErrorMessage from "../components/UI/ErrorMessage";
 import { PasswordRules } from "../components/Auth/PasswordRule";
 import GoogleAuthButton from "../components/Auth/GoogleAuthButton";
+import { authService } from "../services/authService";
 
 function Signup() {
   const [formData, setFormData] = useState({
@@ -69,20 +70,23 @@ function Signup() {
       return;
     }
     try {
-      const response = await fetch("http://localhost:3002/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      await authService.signup({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
       });
-      console.log("res: ", response);
-      if (response.ok) {
-        alert("Sign up successful!");
-        navigate("/login");
-      } else {
-        setError("Sign up failed. Please try again.");
-      }
+
+      // 성공 메시지 표시
+      alert("Sign up successful!");
+      navigate("/login");
     } catch (err) {
-      setError(err.message);
+      if (err.message === "This email is already registered") {
+        setError(
+          "This email is already registered. Please use a different email or login."
+        );
+      } else {
+        setError(err.message || "Failed to sign up. Please try again.");
+      }
     }
   };
 

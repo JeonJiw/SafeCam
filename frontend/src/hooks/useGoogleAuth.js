@@ -11,33 +11,30 @@ export const useGoogleAuth = () => {
   };
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const code = new URLSearchParams(window.location.search).get("code");
+    // URL에서 access_token과 user 정보를 직접 파싱
+    const params = new URLSearchParams(window.location.search);
+    console.log("4. Received URL params:", Object.fromEntries(params));
 
-      if (code) {
-        try {
-          console.log("callback with code:", code);
-          const response = await authAPI.handleGoogleCallback(
-            window.location.search
-          );
-          console.log("Backend response:", response);
+    const accessToken = params.get("access_token");
+    const userInfo = params.get("user");
+    console.log("5. Extracted tokens:", { accessToken, userInfo });
 
-          if (response && response.data) {
-            localStorage.setItem("access_token", response.data.access_token);
-            localStorage.setItem("user", JSON.stringify(response.data.user));
-            navigate("/dashboard");
-          } else {
-            console.error("Unexpected response structure:", response);
-            setError("Invalid response format");
-          }
-        } catch (err) {
-          console.error("Detailed auth error:", err);
-          setError(err.message || "Authentication failed");
+    if (accessToken) {
+      try {
+        localStorage.setItem("access_token", accessToken);
+        if (userInfo) {
+          localStorage.setItem("user", userInfo);
+          console.log("6. Stored in localStorage:", {
+            access_token: localStorage.getItem("access_token"),
+            user: localStorage.getItem("user"),
+          });
         }
+        navigate("/dashboard");
+      } catch (err) {
+        console.error("Error processing auth callback:", err);
+        setError(err.message || "Authentication failed");
       }
-    };
-
-    handleCallback();
+    }
   }, [navigate]);
 
   return { handleGoogleAuth, error };

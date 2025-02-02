@@ -8,15 +8,4 @@ export const authAPI = {
   initiateGoogleAuth: () => {
     window.location.href = `${api.defaults.baseURL}/auth/google`;
   },
-
-  handleGoogleCallback: async (searchString) => {
-    try {
-      const response = await api.get(`/auth/google/callback${searchString}`);
-
-      return response;
-    } catch (error) {
-      console.error("API Error:", error);
-      throw error;
-    }
-  },
 };

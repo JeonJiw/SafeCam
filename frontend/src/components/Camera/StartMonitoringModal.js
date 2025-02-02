@@ -22,6 +22,10 @@ const StartMonitoringModal = ({ onClose, onStart }) => {
             deviceId: videoDevices[0].deviceId,
             label: videoDevices[0].label,
           };
+          console.log(
+            "Attempting to find device with ID:",
+            deviceInfo.deviceId
+          );
           const response = await deviceAPI.findByHardwareId(
             deviceInfo.deviceId
           );

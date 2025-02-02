@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import Input from "../components/UI/Input";
 import Button from "../components/UI/Button";
@@ -16,6 +16,7 @@ function Login() {
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,8 +33,18 @@ function Login() {
 
       if (response.access_token) {
         login(response.access_token);
+
+        // URL 파라미터에서 redirectTo 값 추출
+        const params = new URLSearchParams(location.search);
+        const redirectTo = params.get("redirectTo");
+
+        if (redirectTo) {
+          navigate(redirectTo); // redirectTo가 있으면 해당 경로로 이동
+        } else {
+          navigate("/dashboard"); // 없으면 대시보드로 이동
+        }
+
         alert("Logged in successful!");
-        navigate("/dashboard");
       } else {
         setError("Login failed. Please try again.");
       }
