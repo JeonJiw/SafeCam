@@ -147,6 +147,16 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
   }
+  @SubscribeMessage('monitoring-start')
+  handleMonitoringStart(@MessageBody() data: any) {
+    console.log('Received monitoring-start event:', data);
+
+    this.server.emit('monitoring-status', {
+      status: 'active',
+      timestamp: new Date().toISOString(),
+      message: 'Monitoring started',
+    });
+  }
 
   @SubscribeMessage('video-frame')
   async handleVideoFrame(

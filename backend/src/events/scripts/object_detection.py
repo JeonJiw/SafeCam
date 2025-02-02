@@ -21,6 +21,12 @@ class MotionDetector:
         self.last_detection_time = None
         self.detection_cooldown = 3  
 
+    def reset(self):
+        """Reset the motion detector state"""
+        self.previous_frame = None
+        self.person_history.clear()
+        self.last_detection_time = None 
+        
     def detect_motion(self, current_frame):
         gray = cv2.cvtColor(np.array(current_frame), cv2.COLOR_RGB2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)

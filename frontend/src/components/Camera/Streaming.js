@@ -4,6 +4,17 @@ import StartMonitoringModal from "./StartMonitoringModal";
 import StopStreamingModal from "./StopStreamingModal";
 import { monitoringAPI } from "../../api/monitoring";
 
+const CountdownOverlay = ({ seconds }) => {
+  return (
+    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-6xl font-bold text-white mb-4">{seconds}</div>
+        <div className="text-xl text-white">System initializing...</div>
+      </div>
+    </div>
+  );
+};
+
 const Streaming = ({ socket }) => {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -13,6 +24,8 @@ const Streaming = ({ socket }) => {
   const [verificationCode, setVerificationCode] = useState(null);
   const [deviceId, setDeviceId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState(10);
+  const [showCountdown, setShowCountdown] = useState(false);
 
   useEffect(() => {
     const checkAndResetSession = async () => {
@@ -27,6 +40,18 @@ const Streaming = ({ socket }) => {
 
     checkAndResetSession();
   }, []);
+
+  useEffect(() => {
+    let timer;
+    if (showCountdown && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      setShowCountdown(false);
+    }
+    return () => clearInterval(timer);
+  }, [countdown, showCountdown]);
 
   const cleanupMediaResources = useCallback(() => {
     if (mediaRecorderRef.current) {
@@ -50,11 +75,22 @@ const Streaming = ({ socket }) => {
       });
       videoRef.current.srcObject = stream;
       setIsStreaming(true);
+      setShowCountdown(true);
+      setCountdown(10);
+      // 모니터링 시작을 서버에 알림
+      if (socket) {
+        console.log("Emitting monitoring start event");
+        socket.emit("monitoring-start", {
+          status: "active",
+          timestamp: new Date().toISOString(),
+          message: "Monitoring started",
+        });
+      }
 
       const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
       recorder.ondataavailable = async (event) => {
-        if (socket) {
+        if (socket && !showCountdown) {
           try {
             const videoTrack = stream.getVideoTracks()[0];
             const imageCapture = new ImageCapture(videoTrack);
@@ -100,10 +136,10 @@ const Streaming = ({ socket }) => {
         throw new Error("Invalid verification code");
       }
 
-      if (!deviceId) {
-        console.error("DeviceId is missing:", deviceId);
-        throw new Error("Device ID is required");
-      }
+      // if (!deviceId) {
+      //   console.error("DeviceId is missing:", deviceId);
+      //   throw new Error("Device ID is required");
+      // }
 
       await monitoringAPI.endMonitoring({
         deviceId: deviceId,
@@ -141,10 +177,13 @@ const Streaming = ({ socket }) => {
         className="w-full rounded-lg"
       />
 
+      {showCountdown && countdown > 0 && (
+        <CountdownOverlay seconds={countdown} />
+      )}
       <div className="absolute top-2 right-2">
         {isStreaming ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            Live
+            {showCountdown ? "Initializing" : "Live"}
           </span>
         ) : (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
