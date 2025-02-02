@@ -78,37 +78,40 @@ const Monitoring = () => {
     [isInitializing]
   );
 
-  const handleMonitoringStatus = useCallback((data) => {
-    console.log("handleMonitoringStatus called with data:", data);
-    console.log("Current monitoring status:", monitoringStatus);
-    console.log("Current initialization state:", isInitializing);
+  const handleMonitoringStatus = useCallback(
+    (data) => {
+      console.log("handleMonitoringStatus called with data:", data);
+      console.log("Current monitoring status:", monitoringStatus);
+      console.log("Current initialization state:", isInitializing);
 
-    if (data.status === "active") {
-      console.log("Activating monitoring...");
-      if (initializationTimer.current) {
-        clearTimeout(initializationTimer.current);
+      if (data.status === "active") {
+        console.log("Activating monitoring...");
+        if (initializationTimer.current) {
+          clearTimeout(initializationTimer.current);
+        }
+
+        setIsInitializing(true);
+        setMonitoringStatus({
+          active: true,
+          startTime: data.timestamp,
+          message: data.message,
+        });
+
+        initializationTimer.current = setTimeout(() => {
+          console.log("Initialization period ended");
+          setIsInitializing(false);
+        }, 10000);
+      } else {
+        console.log("Deactivating monitoring...");
+        setMonitoringStatus({
+          active: false,
+          startTime: null,
+          message: data.message,
+        });
       }
-
-      setIsInitializing(true);
-      setMonitoringStatus({
-        active: true,
-        startTime: data.timestamp,
-        message: data.message,
-      });
-
-      initializationTimer.current = setTimeout(() => {
-        console.log("Initialization period ended");
-        setIsInitializing(false);
-      }, 10000);
-    } else {
-      console.log("Deactivating monitoring...");
-      setMonitoringStatus({
-        active: false,
-        startTime: null,
-        message: data.message,
-      });
-    }
-  }, []);
+    },
+    [isInitializing, monitoringStatus]
+  );
 
   const handleError = useCallback((data) => {
     console.error("Detection error:", data.error);
