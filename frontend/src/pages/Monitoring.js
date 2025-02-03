@@ -30,19 +30,6 @@ const Monitoring = () => {
       console.log("Socket connected with ID:", newSocket.id);
     });
 
-    newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
-
-    newSocket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-      console.log("Connection error details:", {
-        url: process.env.REACT_APP_BACKEND_URL,
-        transport: newSocket.io.engine.transport.name,
-      });
-    });
-
-    console.log("Setting socket state...");
     setSocket(newSocket);
 
     return () => {
@@ -56,62 +43,38 @@ const Monitoring = () => {
     };
   }, []);
 
-  const handleDetectionAlert = useCallback(
-    (data) => {
-      if (!isInitializing) {
-        console.log("Processing detection alert", data);
-        setDetectionLogs((prev) =>
-          [
-            {
-              id: Date.now(),
-              timestamp: data.timestamp,
-              detections: data.detections,
-              alertLevel: data.alert_level,
-            },
-            ...prev,
-          ].slice(0, 50)
-        );
-      } else {
-        console.log("Skipping detection alert during initialization");
-      }
-    },
-    [isInitializing]
-  );
+  const handleDetectionAlert = useCallback((data) => {
+    console.log("Processing detection alert", data);
+    setDetectionLogs((prev) =>
+      [
+        {
+          id: Date.now(),
+          timestamp: data.timestamp,
+          detections: data.detections,
+          alertLevel: data.alert_level,
+        },
+        ...prev,
+      ].slice(0, 50)
+    );
+  }, []);
 
-  const handleMonitoringStatus = useCallback(
-    (data) => {
-      console.log("handleMonitoringStatus called with data:", data);
-      console.log("Current monitoring status:", monitoringStatus);
-      console.log("Current initialization state:", isInitializing);
-
-      if (data.status === "active") {
-        console.log("Activating monitoring...");
-        if (initializationTimer.current) {
-          clearTimeout(initializationTimer.current);
-        }
-
-        setIsInitializing(true);
-        setMonitoringStatus({
-          active: true,
-          startTime: data.timestamp,
-          message: data.message,
-        });
-
-        initializationTimer.current = setTimeout(() => {
-          console.log("Initialization period ended");
-          setIsInitializing(false);
-        }, 10000);
-      } else {
-        console.log("Deactivating monitoring...");
-        setMonitoringStatus({
-          active: false,
-          startTime: null,
-          message: data.message,
-        });
-      }
-    },
-    [isInitializing, monitoringStatus]
-  );
+  const handleMonitoringStatus = useCallback((data) => {
+    if (data.status === "active") {
+      setMonitoringStatus({
+        active: true,
+        startTime: data.timestamp,
+        message: data.message,
+      });
+      setIsInitializing(false);
+    } else {
+      console.log("Deactivating monitoring...");
+      setMonitoringStatus({
+        active: false,
+        startTime: null,
+        message: data.message,
+      });
+    }
+  }, []);
 
   const handleError = useCallback((data) => {
     console.error("Detection error:", data.error);
@@ -176,11 +139,6 @@ const Monitoring = () => {
           <div className="aspect-w-16 aspect-h-9">
             <Streaming socket={socket} />
           </div>
-          {isInitializing && (
-            <div className="mt-2 text-sm text-gray-500 text-center">
-              Detection will begin in a few seconds...
-            </div>
-          )}
         </div>
 
         <DetectionLog logs={detectionLogs} />

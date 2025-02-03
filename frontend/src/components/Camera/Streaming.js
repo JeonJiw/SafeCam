@@ -1,23 +1,12 @@
-// Streaming.js
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import StartMonitoringModal from "./StartMonitoringModal";
 import StopStreamingModal from "./StopStreamingModal";
 import { monitoringAPI } from "../../api/monitoring";
 
-const CountdownOverlay = ({ seconds }) => {
-  return (
-    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-6xl font-bold text-white mb-4">{seconds}</div>
-        <div className="text-xl text-white">System initializing...</div>
-      </div>
-    </div>
-  );
-};
-
 const Streaming = ({ socket }) => {
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [showStopModal, setShowStopModal] = useState(false);
   const [showStartModal, setShowStartModal] = useState(true);
@@ -26,6 +15,24 @@ const Streaming = ({ socket }) => {
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(10);
   const [showCountdown, setShowCountdown] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+
+  const startPreview = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      videoRef.current.srcObject = stream;
+      streamRef.current = stream;
+    } catch (err) {
+      console.error("Error accessing webcam:", err);
+    }
+  };
+
+  useEffect(() => {
+    startPreview();
+  }, []);
 
   useEffect(() => {
     const checkAndResetSession = async () => {
@@ -69,77 +76,89 @@ const Streaming = ({ socket }) => {
 
   const startStreaming = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
-      videoRef.current.srcObject = stream;
       setIsStreaming(true);
       setShowCountdown(true);
       setCountdown(10);
-      // 모니터링 시작을 서버에 알림
-      if (socket) {
-        console.log("Emitting monitoring start event");
-        socket.emit("monitoring-start", {
-          status: "active",
-          timestamp: new Date().toISOString(),
-          message: "Monitoring started",
-        });
-      }
 
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
-
-      recorder.ondataavailable = async (event) => {
-        if (socket && !showCountdown) {
-          try {
-            const videoTrack = stream.getVideoTracks()[0];
-            const imageCapture = new ImageCapture(videoTrack);
-            const bitmap = await imageCapture.grabFrame();
-
-            const canvas = document.createElement("canvas");
-            canvas.width = bitmap.width;
-            canvas.height = bitmap.height;
-            const context = canvas.getContext("2d");
-            context.drawImage(bitmap, 0, 0);
-
-            canvas.toBlob(
-              (blob) => {
-                socket.emit("video-frame", blob);
-              },
-              "image/jpeg",
-              0.8
-            );
-          } catch (error) {
-            console.error("Error capturing frame:", error);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === 1) {
+            clearInterval(timer);
+            startActualStreaming();
           }
-        }
-      };
-
-      mediaRecorderRef.current = recorder;
-      recorder.start(500);
+          return prev - 1;
+        });
+      }, 1000);
     } catch (error) {
-      console.error("Error accessing webcam:", error);
+      console.error("Error in startStreaming:", error);
       setIsStreaming(false);
     }
   };
+  const startActualStreaming = () => {
+    setShowCountdown(false);
 
-  const handleStartMonitoring = (code, deviceId) => {
+    if (socket) {
+      socket.emit("monitoring-start", {
+        status: "active",
+        timestamp: new Date().toISOString(),
+        message: "Monitoring started",
+        sessionId: sessionId,
+      });
+    }
+    const stream = streamRef.current;
+    if (!stream) return;
+
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+    recorder.ondataavailable = async () => {
+      if (socket && !showCountdown) {
+        try {
+          const videoTrack = stream.getVideoTracks()[0];
+          const imageCapture = new ImageCapture(videoTrack);
+          const bitmap = await imageCapture.grabFrame();
+
+          const canvas = document.createElement("canvas");
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const context = canvas.getContext("2d");
+          context.drawImage(bitmap, 0, 0);
+
+          canvas.toBlob(
+            (blob) => {
+              socket.emit("video-frame", blob);
+            },
+            "image/jpeg",
+            0.8
+          );
+        } catch (error) {
+          console.error("Error capturing frame:", error);
+        }
+      }
+    };
+
+    mediaRecorderRef.current = recorder;
+    recorder.start(500);
+  };
+
+  const handleStartMonitoring = (code, deviceId, sessionId) => {
     setVerificationCode(code);
     setDeviceId(deviceId);
+    setSessionId(sessionId);
     setShowStartModal(false);
     startStreaming();
   };
+
+  useEffect(() => {
+    if (sessionId && !isStreaming) {
+      startStreaming();
+    }
+  }, [sessionId]);
 
   const handleStopStreaming = async (inputCode) => {
     try {
       if (inputCode !== verificationCode) {
         throw new Error("Invalid verification code");
       }
-
-      // if (!deviceId) {
-      //   console.error("DeviceId is missing:", deviceId);
-      //   throw new Error("Device ID is required");
-      // }
 
       await monitoringAPI.endMonitoring({
         deviceId: deviceId,
@@ -180,6 +199,7 @@ const Streaming = ({ socket }) => {
       {showCountdown && countdown > 0 && (
         <CountdownOverlay seconds={countdown} />
       )}
+
       <div className="absolute top-2 right-2">
         {isStreaming ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -216,6 +236,17 @@ const Streaming = ({ socket }) => {
           onVerify={handleStopStreaming}
         />
       )}
+    </div>
+  );
+};
+
+const CountdownOverlay = ({ seconds }) => {
+  return (
+    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-6xl font-bold text-white mb-4">{seconds}</div>
+        <div className="text-xl text-white">System initializing...</div>
+      </div>
     </div>
   );
 };

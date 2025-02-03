@@ -69,8 +69,8 @@ const StartMonitoringModal = ({ onClose, onStart }) => {
 
       if (response.data?.success) {
         setVerificationSent(true);
-        // Pass both verification code and deviceId to parent component
-        onStart(verificationCode, connectedDevice.deviceId);
+        const sessionId = response.data.sessionId;
+        onStart(verificationCode, connectedDevice.deviceId, sessionId);
       } else {
         setError("Failed to start monitoring");
       }
