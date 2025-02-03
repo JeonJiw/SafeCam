@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { join } from 'path';
+import { ActivitiesService } from 'src/activities/activities.service';
 
 interface DetectionMessage {
   type: 'monitoring_start' | 'person_detected' | 'error';
@@ -31,9 +32,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private pythonProcess: ChildProcessWithoutNullStreams | null = null;
   private isProcessing: boolean = false;
   private outputBuffer: string = '';
+  private activeMonitoringId: number | null = null;
 
-  constructor() {
-    this.initializePythonProcess();
+  constructor(private readonly activitiesService: ActivitiesService) {}
+
+  async initialize() {
+    if (!this.pythonProcess) {
+      await this.initializePythonProcess();
+    }
   }
 
   private async initializePythonProcess() {
@@ -139,16 +145,26 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
-    if (!this.pythonProcess) {
-      this.initializePythonProcess();
-    }
+    this.initialize();
   }
 
   handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
   }
   @SubscribeMessage('monitoring-start')
-  handleMonitoringStart(@MessageBody() data: any) {
+  async handleMonitoringStart(@MessageBody() data: any) {
+    this.activeMonitoringId = data.sessionId;
+
+    await this.activitiesService.createActivity(data.sessionId, {
+      logs: [
+        {
+          type: 'monitoring_start',
+          timestamp: new Date(data.timestamp),
+        },
+      ],
+      lastUpdated: new Date(),
+    });
+
     console.log('Received monitoring-start event:', data);
 
     this.server.emit('monitoring-status', {
