@@ -8,7 +8,9 @@ import { FailedAttempt } from './entities/failed-attempt.entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule } from '@nestjs/config';
 import { Device } from '../devices/entities/device.entity';
-import { UsersModule } from '../users/users.module'; // 추가
+import { UsersModule } from '../users/users.module';
+import { EventsModule } from 'src/events/events.module';
+import { ActivitiesModule } from 'src/activities/activities.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { UsersModule } from '../users/users.module'; // 추가
     }),
     ConfigModule,
     UsersModule,
+    EventsModule,
+    ActivitiesModule,
   ],
   controllers: [MonitoringController],
   providers: [MonitoringService, EmailService],

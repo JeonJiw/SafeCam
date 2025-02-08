@@ -9,7 +9,6 @@ import {
   UploadedFile,
   Req,
   Param,
-  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -17,11 +16,15 @@ import { MonitoringService } from './monitoring.service';
 import { CreateMonitoringDto } from './dto/create-monitoring.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { LogFailedAttemptDto } from './dto/failed-attempt.dto';
+import { EventsGateway } from 'src/events/events.gateway';
 
 @Controller('monitoring')
 @UseGuards(AuthGuard('jwt'))
 export class MonitoringController {
-  constructor(private readonly monitoringService: MonitoringService) {}
+  constructor(
+    private readonly monitoringService: MonitoringService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   @Post('start')
   async startMonitoring(
@@ -49,6 +52,11 @@ export class MonitoringController {
       verifyCodeDto.deviceId,
       verifyCodeDto.code,
     );
+  }
+  @Post('initialize')
+  async initializeMonitoring(@Req() req) {
+    await this.eventsGateway.initialize();
+    return { message: 'Monitoring system initialized' };
   }
 
   @Post('reset-session')

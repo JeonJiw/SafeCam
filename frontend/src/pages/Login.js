@@ -34,14 +34,13 @@ function Login() {
       if (response.access_token) {
         login(response.access_token);
 
-        // URL 파라미터에서 redirectTo 값 추출
         const params = new URLSearchParams(location.search);
         const redirectTo = params.get("redirectTo");
 
         if (redirectTo) {
-          navigate(redirectTo); // redirectTo가 있으면 해당 경로로 이동
+          navigate(redirectTo);
         } else {
-          navigate("/dashboard"); // 없으면 대시보드로 이동
+          navigate("/dashboard");
         }
 
         alert("Logged in successful!");

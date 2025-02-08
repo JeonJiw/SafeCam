@@ -4,9 +4,11 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Device } from '../../devices/entities/device.entity';
+import { Activity } from 'src/activities/entities/activity.entity';
 
 @Entity()
 export class MonitoringSession {
@@ -30,4 +32,7 @@ export class MonitoringSession {
 
   @Column({ default: 'active' })
   status: string; // 'active' | 'ended'
+
+  @OneToMany(() => Activity, (activity) => activity.monitoringSession)
+  activities: Activity[];
 }

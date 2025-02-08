@@ -22,10 +22,6 @@ const StartMonitoringModal = ({ onClose, onStart }) => {
             deviceId: videoDevices[0].deviceId,
             label: videoDevices[0].label,
           };
-          console.log(
-            "Attempting to find device with ID:",
-            deviceInfo.deviceId
-          );
           const response = await deviceAPI.findByHardwareId(
             deviceInfo.deviceId
           );
@@ -57,20 +53,24 @@ const StartMonitoringModal = ({ onClose, onStart }) => {
         return;
       }
 
-      // Generate 6-digit verification code
       const verificationCode = Math.random().toString().slice(2, 8);
-      console.log("verificationCode: ", verificationCode);
-      // Send monitoring request with device info and verification code
+
       const response = await monitoringAPI.startMonitoring({
         deviceId: connectedDevice.deviceId,
         verificationCode,
       });
-      console.log("response: ", response);
+      console.log("Frontend response: ", response);
 
       if (response.data?.success) {
         setVerificationSent(true);
         const sessionId = response.data.sessionId;
-        onStart(verificationCode, connectedDevice.deviceId, sessionId);
+        const activityId = response.data.activityId;
+        onStart(
+          verificationCode,
+          connectedDevice.deviceId,
+          sessionId,
+          activityId
+        );
       } else {
         setError("Failed to start monitoring");
       }

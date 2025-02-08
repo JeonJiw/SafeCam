@@ -13,6 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { MonitoringSession } from './entities/monitoring-session.entity';
+import { ActivitiesService } from 'src/activities/activities.service';
 
 @Injectable()
 export class MonitoringService {
@@ -32,6 +33,7 @@ export class MonitoringService {
     private devicesRepository: Repository<Device>,
     @InjectRepository(MonitoringSession)
     private monitoringSessionRepository: Repository<MonitoringSession>,
+    private readonly activitiesService: ActivitiesService,
     private configService: ConfigService,
   ) {}
 
@@ -39,6 +41,7 @@ export class MonitoringService {
     userId: number,
     createMonitoringDto: CreateMonitoringDto,
   ) {
+    console.log('Monitoring start from backend');
     const { deviceId, verificationCode } = createMonitoringDto;
 
     const existingMemorySession = Array.from(this.activeSessions.values()).find(
@@ -67,7 +70,6 @@ export class MonitoringService {
       throw new NotFoundException('Device not found');
     }
 
-    // Create session in database
     const session = this.monitoringSessionRepository.create({
       user: { id: userId },
       device: { id: device.id },
@@ -77,8 +79,8 @@ export class MonitoringService {
 
     try {
       const savedSession = await this.monitoringSessionRepository.save(session);
+      console.log('Session created and saved: ', session);
 
-      // Add to in-memory map
       this.activeSessions.set(deviceId, {
         userId,
         verificationCode,
@@ -86,6 +88,17 @@ export class MonitoringService {
         status: 'active',
         detectionLogs: [],
       });
+
+      const activity = await this.activitiesService.createActivity(session.id, {
+        logs: [
+          {
+            type: 'monitoring_start',
+            timestamp: new Date(),
+          },
+        ],
+        lastUpdated: new Date(),
+      });
+      console.log('Activity created and saved: ', activity);
 
       const Url = process.env.FRONTEND_URL;
       const monitoringUrl = `${Url}/monitoring`;
@@ -95,10 +108,16 @@ export class MonitoringService {
         userId,
         monitoringUrl,
       );
-
+      console.log(
+        'Backend Return - sessionId, activityId: ',
+        savedSession.id,
+        activity.id,
+      );
       return {
         success: true,
         message: 'Monitoring session started successfully',
+        sessionId: savedSession.id,
+        activityId: activity.id,
       };
     } catch (error) {
       this.activeSessions.delete(deviceId);

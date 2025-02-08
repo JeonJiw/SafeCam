@@ -16,6 +16,7 @@ const Streaming = ({ socket }) => {
   const [countdown, setCountdown] = useState(10);
   const [showCountdown, setShowCountdown] = useState(false);
   const [sessionId, setSessionId] = useState(null);
+  const [activityId, setActivityId] = useState(null);
 
   const startPreview = async () => {
     try {
@@ -74,39 +75,20 @@ const Streaming = ({ socket }) => {
     }
   }, [socket]);
 
-  const startStreaming = async () => {
-    try {
-      setIsStreaming(true);
-      setShowCountdown(true);
-      setCountdown(10);
-
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev === 1) {
-            clearInterval(timer);
-            startActualStreaming();
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (error) {
-      console.error("Error in startStreaming:", error);
-      setIsStreaming(false);
-    }
-  };
   const startActualStreaming = () => {
     setShowCountdown(false);
+    const stream = streamRef.current;
+    if (!stream) return;
 
     if (socket) {
       socket.emit("monitoring-start", {
+        sessionId,
+        activityId,
         status: "active",
         timestamp: new Date().toISOString(),
         message: "Monitoring started",
-        sessionId: sessionId,
       });
     }
-    const stream = streamRef.current;
-    if (!stream) return;
 
     const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
@@ -140,19 +122,40 @@ const Streaming = ({ socket }) => {
     recorder.start(500);
   };
 
-  const handleStartMonitoring = (code, deviceId, sessionId) => {
+  const startStreaming = async () => {
+    try {
+      setIsStreaming(true);
+      setShowCountdown(true);
+      setCountdown(10);
+
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === 1) {
+            clearInterval(timer);
+            startActualStreaming();
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (error) {
+      console.error("Error in startStreaming:", error);
+      setIsStreaming(false);
+    }
+  };
+
+  const handleStartMonitoring = (code, deviceId, sessionId, activityId) => {
     setVerificationCode(code);
     setDeviceId(deviceId);
     setSessionId(sessionId);
+    setActivityId(activityId);
     setShowStartModal(false);
-    startStreaming();
   };
 
   useEffect(() => {
-    if (sessionId && !isStreaming) {
+    if (sessionId && activityId) {
       startStreaming();
     }
-  }, [sessionId]);
+  }, [sessionId, activityId]);
 
   const handleStopStreaming = async (inputCode) => {
     try {

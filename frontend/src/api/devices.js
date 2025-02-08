@@ -7,7 +7,6 @@ export const deviceAPI = {
   update: (deviceId, data) => api.put(`/devices/${deviceId}`, data),
   delete: (deviceId) => api.delete(`/devices/${deviceId}`),
   findByHardwareId: (deviceId) => {
-    console.log("Making API call to:", `/devices/mydevices/${deviceId}`);
     return api.get(`/devices/mydevices/${deviceId}`);
   },
 };
