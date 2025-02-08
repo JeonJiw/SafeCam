@@ -15,7 +15,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { ActivitiesService } from './activities.service';
-import { CreateActivityDto } from './dto/create-activity.dto';
 import { Activity } from './entities/activity.entity';
 import { GetActivitiesFilterDto } from './dto/get-activities.filter.dto';
 
@@ -23,15 +22,6 @@ import { GetActivitiesFilterDto } from './dto/get-activities.filter.dto';
 @UseGuards(AuthGuard('jwt'))
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
-
-  @Post()
-  async createActivity(
-    @Body(ValidationPipe) createActivityDto: CreateActivityDto,
-    @Req() req,
-  ): Promise<Activity> {
-    createActivityDto.userId = req.user.userId;
-    return this.activitiesService.createActivity(createActivityDto);
-  }
 
   @Get('myactivities')
   async getMyActivities(@Req() req): Promise<Activity[]> {

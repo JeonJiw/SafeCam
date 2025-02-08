@@ -22,7 +22,7 @@ interface DetectionMessage {
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
   },
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -30,9 +30,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private pythonProcess: ChildProcessWithoutNullStreams | null = null;
-  private isProcessing: boolean = false;
   private outputBuffer: string = '';
-  private activeMonitoringId: number | null = null;
+  private activeMonitoringSession: {
+    deviceId: number;
+    activityId: number;
+  } | null = null;
 
   constructor(private readonly activitiesService: ActivitiesService) {}
 
@@ -44,6 +46,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private async initializePythonProcess() {
     if (this.pythonProcess) {
+      console.log('Python process already exists');
       return;
     }
 
@@ -59,12 +62,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const pythonPath = process.env.PYTHON_PATH;
       this.pythonProcess = spawn(pythonPath, [scriptPath]);
-      console.log(
-        'Initialized Python process with PID:',
-        this.pythonProcess.pid,
-      );
+      console.log('Python process started with PID:', this.pythonProcess.pid);
 
-      this.pythonProcess.stdout.on('data', (data) => {
+      this.pythonProcess.stdout.on('data', async (data) => {
         const output = data.toString();
         this.outputBuffer += output;
 
@@ -89,20 +89,48 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                   break;
 
                 case 'person_detected':
-                  console.log(
-                    'Person detected:',
-                    message.data.detections.length > 0
-                      ? 'Approaching person detected'
-                      : 'No immediate threat',
-                  );
+                  console.log('Processing person detection:', {
+                    hasDetections: message.data.detections.length > 0,
+                    activeActivityId: this.activeMonitoringSession?.activityId,
+                    timestamp: message.timestamp,
+                  });
+
                   this.server.emit('detection-alert', {
                     timestamp: message.timestamp,
                     detections: message.data.detections,
                     alert_level: message.data.alert_level,
                   });
+
+                  if (this.activeMonitoringSession?.activityId) {
+                    try {
+                      await this.activitiesService.appendActivityLog(
+                        this.activeMonitoringSession.activityId,
+                        {
+                          type: 'person_detected',
+                          timestamp: new Date(message.timestamp),
+                          detections: message.data.detections,
+                        },
+                      );
+                    } catch (error) {
+                      console.error('Failed to save detection log:', error);
+                    }
+                  }
                   break;
 
                 case 'error':
+                  if (this.activeMonitoringSession?.activityId) {
+                    await this.activitiesService.appendActivityLog(
+                      this.activeMonitoringSession.activityId,
+                      {
+                        type: 'system_error',
+                        timestamp: new Date(message.timestamp),
+                        details: {
+                          error: message.data.error,
+                          type: message.data.type,
+                        },
+                      },
+                    );
+                  }
                   console.error('Detection error:', message.data.error);
                   this.server.emit('detection-error', {
                     timestamp: message.timestamp,
@@ -112,17 +140,43 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                   break;
               }
             } catch (err) {
+              if (this.activeMonitoringSession?.activityId) {
+                await this.activitiesService.appendActivityLog(
+                  this.activeMonitoringSession.activityId,
+                  {
+                    type: 'parsing_error',
+                    timestamp: new Date(),
+                    details: {
+                      error: err.message,
+                      type: 'json_parse_error',
+                    },
+                  },
+                );
+              }
               continue;
             }
           }
         } catch (error) {
           console.error('Error processing Python output:', error);
+          if (this.activeMonitoringSession?.activityId) {
+            await this.activitiesService.appendActivityLog(
+              this.activeMonitoringSession.activityId,
+              {
+                type: 'system_error',
+                timestamp: new Date(),
+                details: {
+                  error: error.message,
+                  type: 'python_process_error',
+                },
+              },
+            );
+          }
         }
       });
 
       this.pythonProcess.stderr.on('data', (data) => {
         const error = data.toString();
-        // ignore requirements msgs
+        console.log('Python stderr:', error);
         if (!error.includes('requirements:')) {
           console.error('Python script error:', error);
         }
@@ -151,27 +205,29 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
   }
+
   @SubscribeMessage('monitoring-start')
   async handleMonitoringStart(@MessageBody() data: any) {
-    this.activeMonitoringId = data.sessionId;
+    console.log('Received monitoring-start event with data:', data);
 
-    await this.activitiesService.createActivity(data.sessionId, {
-      logs: [
-        {
-          type: 'monitoring_start',
-          timestamp: new Date(data.timestamp),
-        },
-      ],
-      lastUpdated: new Date(),
-    });
+    if (!data.sessionId || !data.activityId) {
+      console.error('Invalid monitoring start data received');
+      return;
+    }
 
-    console.log('Received monitoring-start event:', data);
+    this.activeMonitoringSession = {
+      deviceId: data.sessionId,
+      activityId: data.activityId,
+    };
 
-    this.server.emit('monitoring-status', {
-      status: 'active',
-      timestamp: new Date().toISOString(),
-      message: 'Monitoring started',
-    });
+    console.log(
+      'Active monitoring session set to:',
+      this.activeMonitoringSession,
+    );
+
+    if (!this.pythonProcess) {
+      await this.initializePythonProcess();
+    }
   }
 
   @SubscribeMessage('video-frame')
@@ -184,47 +240,47 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    if (this.isProcessing) {
-      return;
-    }
-
     try {
-      this.isProcessing = true;
       const filePath = path.join('/tmp', `frame-${Date.now()}.jpg`);
       await fs.promises.writeFile(filePath, data);
+      console.log('Frame saved to:', filePath);
 
       if (!this.pythonProcess) {
+        console.log('Initializing Python process...');
         await this.initializePythonProcess();
       }
 
       if (this.pythonProcess && this.pythonProcess.stdin.writable) {
+        console.log('Sending frame path to Python:', filePath);
         this.pythonProcess.stdin.write(filePath + '\n');
+      } else {
+        console.error('Python process not ready');
       }
 
       setTimeout(async () => {
         try {
           await fs.promises.unlink(filePath);
+          console.log('Cleaned up frame:', filePath);
         } catch (err) {
           console.error('Error cleaning up file:', err);
         }
-        this.isProcessing = false;
       }, 500);
     } catch (error) {
       console.error('Error handling video frame:', error);
-      this.isProcessing = false;
       throw error;
     }
   }
 
   @SubscribeMessage('streaming-finished')
-  handleStreamingFinished(client: Socket): void {
-    console.log('Streaming finished.');
+  handleStreamingFinished(): void {
+    console.log('Streaming finished');
     this.server.emit('streaming-ended', 'Streaming has ended.');
 
     if (this.pythonProcess) {
       this.pythonProcess.kill();
       this.pythonProcess = null;
     }
+    this.activeMonitoringSession = null;
   }
 
   async onModuleDestroy() {

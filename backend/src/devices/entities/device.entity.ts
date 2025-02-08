@@ -43,5 +43,5 @@ export class Device {
   updatedAt: Date;
 
   @OneToMany(() => Activity, (activity) => activity.device)
-  activity: Activity[];
+  activities: Activity[];
 }

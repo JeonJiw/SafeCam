@@ -10,30 +10,40 @@ import { Between, Like, Repository } from 'typeorm';
 import { Activity } from './entities/activity.entity';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { GetActivitiesFilterDto } from './dto/get-activities.filter.dto';
+import { User } from 'src/users/entities/user.entity';
+import { MonitoringSession } from 'src/monitoring/entities/monitoring-session.entity';
+import { AppendActivityLogDto } from './dto/append-activity-log.dto';
 
 @Injectable()
 export class ActivitiesService {
   constructor(
     @InjectRepository(Activity)
     private activitiesRepository: Repository<Activity>,
+    @InjectRepository(MonitoringSession)
+    private monitoringSessionRepository: Repository<MonitoringSession>,
   ) {}
 
   async createActivity(
-    createActivityDto: CreateActivityDto,
+    monitoringSessionId: number,
+    log: any,
   ): Promise<Activity> {
-    const { activityType, timestamp, description, metadata, deviceId, userId } =
-      createActivityDto;
-
-    const activity = this.activitiesRepository.create({
-      activityType,
-      timestamp,
-      description,
-      metadata,
-      device: { id: deviceId },
-      user: { id: userId },
+    const session = await this.monitoringSessionRepository.findOne({
+      where: { id: monitoringSessionId },
+      relations: ['user', 'device'],
     });
 
-    return await this.activitiesRepository.save(activity);
+    if (!session) {
+      throw new NotFoundException('Monitoring session not found');
+    }
+
+    const activity = this.activitiesRepository.create({
+      user: session.user,
+      device: session.device,
+      monitoringSession: session,
+      log: log,
+    });
+
+    return this.activitiesRepository.save(activity);
   }
 
   async getActivities(filterDto: GetActivitiesFilterDto): Promise<Activity[]> {
@@ -81,5 +91,28 @@ export class ActivitiesService {
     if (result.affected === 0) {
       throw new NotFoundException(`Activity with ID "${id}" not found`);
     }
+  }
+
+  async appendActivityLog(
+    activityId: number,
+    newLog: AppendActivityLogDto,
+  ): Promise<void> {
+    const activity = await this.activitiesRepository.findOne({
+      where: { id: activityId },
+    });
+
+    if (!activity) {
+      throw new NotFoundException('Activity not found');
+    }
+
+    activity.log.logs.push({
+      type: newLog.type,
+      timestamp: newLog.timestamp,
+      detections: newLog.detections,
+    });
+
+    activity.log.lastUpdated = new Date();
+
+    await this.activitiesRepository.save(activity);
   }
 }

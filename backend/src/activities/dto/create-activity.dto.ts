@@ -1,37 +1,22 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsBoolean,
-  IsOptional,
-  IsEnum,
-  IsDate,
-  IsJSON,
-  IsObject,
-} from 'class-validator';
+import { IsNumber, ValidateNested } from 'class-validator';
 
-import { ActivityType } from '../entities/activity.entity';
-import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { ActivityLogDto } from './activity-log.dto';
 
 export class CreateActivityDto {
-  @IsNotEmpty()
-  deviceId: number;
-
-  @IsOptional()
+  @IsNumber()
   userId: number;
 
-  @IsNotEmpty()
-  @IsEnum(ActivityType)
-  activityType: ActivityType;
+  @IsNumber()
+  deviceId: number;
 
-  @IsNotEmpty()
-  @Transform(({ value }) => new Date(value))
-  @IsDate()
-  timestamp: Date;
+  @IsNumber()
+  monitoringSessionId: number;
 
-  @IsOptional()
-  description: string;
-
-  @IsOptional()
-  @IsObject()
-  metadata: object;
+  @ValidateNested()
+  @Type(() => ActivityLogDto)
+  log: {
+    logs: ActivityLogDto[];
+    lastUpdated: Date;
+  };
 }
