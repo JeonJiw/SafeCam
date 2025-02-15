@@ -83,7 +83,6 @@ export const ActivityDetails = ({ activity, onClose }) => {
                         {formatDate(log.timestamp)}
                       </div>
                     </div>
-                    {log.detections && renderDetections(log.detections)}
                   </div>
                 </div>
               ))}

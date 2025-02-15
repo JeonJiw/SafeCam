@@ -41,7 +41,6 @@ export class MonitoringService {
     userId: number,
     createMonitoringDto: CreateMonitoringDto,
   ) {
-    console.log('Monitoring start from backend');
     const { deviceId, verificationCode } = createMonitoringDto;
 
     const existingMemorySession = Array.from(this.activeSessions.values()).find(
