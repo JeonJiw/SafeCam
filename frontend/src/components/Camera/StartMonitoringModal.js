@@ -25,6 +25,7 @@ const StartMonitoringModal = ({ onClose, onStart }) => {
           const response = await deviceAPI.findByHardwareId(
             deviceInfo.deviceId
           );
+          console.log(response.data);
 
           if (response.data) {
             setConnectedDevice(response.data);

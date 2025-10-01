@@ -17,7 +17,7 @@ export class Device {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   deviceId: string;
 
   @ManyToOne(() => User, (user) => user.devices, { eager: true, cascade: true })

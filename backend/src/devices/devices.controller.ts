@@ -34,8 +34,12 @@ export class DevicesController {
   }
 
   @Get('mydevices/:deviceId')
-  async findByHardwareId(@Param('deviceId') deviceId: string): Promise<Device> {
-    return await this.devicesService.findByHardwareId(deviceId);
+  async findByHardwareId(
+    @Req() req,
+    @Param('deviceId') deviceId: string,
+  ): Promise<Device> {
+    const userId = req.user.userId;
+    return await this.devicesService.findByHardwareId(deviceId, userId);
   }
 
   @Get('mydevices')

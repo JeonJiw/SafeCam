@@ -61,9 +61,10 @@ export class MonitoringService {
     }
 
     const device = await this.devicesRepository.findOne({
-      where: { deviceId },
+      where: { deviceId, user: { id: userId } },
       relations: ['user'],
     });
+    console.log(device);
 
     if (!device) {
       throw new NotFoundException('Device not found');
@@ -78,7 +79,6 @@ export class MonitoringService {
 
     try {
       const savedSession = await this.monitoringSessionRepository.save(session);
-      console.log('Session created and saved: ', session);
 
       this.activeSessions.set(deviceId, {
         userId,
@@ -97,7 +97,6 @@ export class MonitoringService {
         ],
         lastUpdated: new Date(),
       });
-      console.log('Activity created and saved: ', activity);
 
       const Url = process.env.FRONTEND_URL;
       const monitoringUrl = `${Url}/monitoring`;
@@ -107,11 +106,7 @@ export class MonitoringService {
         userId,
         monitoringUrl,
       );
-      console.log(
-        'Backend Return - sessionId, activityId: ',
-        savedSession.id,
-        activity.id,
-      );
+
       return {
         success: true,
         message: 'Monitoring session started successfully',

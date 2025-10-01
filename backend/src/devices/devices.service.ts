@@ -102,14 +102,18 @@ export class DevicesService {
       throw new NotFoundException(`Device with ID ${id} not found`);
     }
   }
-  async findByHardwareId(deviceId: string): Promise<Device | undefined> {
-    console.log('Searching for device with hardware ID:', deviceId);
+  async findByHardwareId(
+    deviceId: string,
+    userId: number,
+  ): Promise<Device | undefined> {
     const device = await this.devicesRepository.findOne({
-      where: { deviceId },
+      where: { deviceId, user: { id: userId } },
     });
     if (!device) {
       throw new NotFoundException('Device not found');
     }
+
+    console.log('d:', device.user);
     return device;
   }
 }
