@@ -30,6 +30,9 @@ function Dashboard() {
         setDevices(devicesData);
         const activitiesData = await activityService.fetchRecentActivities();
         console.log("Activities data received:", activitiesData);
+        activitiesData.sort(
+          (a, b) => new Date(b.log.lastUpdated) - new Date(a.log.lastUpdated)
+        );
         setActivities(activitiesData);
       } catch (error) {
         console.error("Dashboard data fetch error:", error);
@@ -77,7 +80,7 @@ function Dashboard() {
             <DeviceCard
               key={device.deviceId}
               device={device}
-              onStartMonitoring={(id) => navigate(`user/devices/${id}`)}
+              onStartMonitoring={(id) => navigate(`/monitoring`)}
             />
           ))}
         </div>

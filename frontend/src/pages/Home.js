@@ -2,8 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import FeaturesGrid from "../components/UI/FeaturresGrid";
 import StepsGrid from "../components/UI/StepsGrid";
+import { useAuth } from "../context/AuthContext";
 
 function Home() {
+  const auth = useAuth();
+  const loggedIn = Boolean(auth?.isAuthenticated ?? auth?.user);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -18,17 +22,19 @@ function Home() {
           </p>
           <div className="flex justify-center gap-4">
             <Link
-              to="/login"
+              to={loggedIn ? "/dashboard" : "/login"}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700"
             >
-              Get Started
+              {loggedIn ? "Go to Dashboard" : "Get Started"}
             </Link>
-            <Link
-              to="/signup"
-              className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium border border-blue-600 hover:bg-blue-50"
-            >
-              Sign Up
-            </Link>
+            {!loggedIn && (
+              <Link
+                to="/signup"
+                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium border border-blue-600 hover:bg-blue-50"
+              >
+                Sign Up
+              </Link>
+            )}
           </div>
         </div>
       </div>
